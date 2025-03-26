@@ -1,7 +1,5 @@
-// app/api/submit/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { createRateLimiter } from "@/lib/rateLimiter";
-import crypto from "crypto";
+import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 type SubmitRequest = {
   clientHash: string;
@@ -42,12 +40,6 @@ export async function POST(request: NextRequest) {
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
     const userAgent = request.headers.get("user-agent") || "";
 
-    // Initialize rate limiter (in-memory)
-    const limiter = createRateLimiter({
-      windowMs: 24 * 60 * 60 * 1000, // 24 hours
-      max: 3, // Max 3 submissions per day
-    });
-
     // Create unique identifier
     const identifier = crypto
       .createHash("sha256")
@@ -68,6 +60,9 @@ export async function POST(request: NextRequest) {
             "X-RateLimit-Remaining": "0",
             "X-RateLimit-Reset": "86400", // 24h in seconds
           },
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': '86400'
+          }
         }
       );
     }
