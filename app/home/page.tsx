@@ -1,24 +1,32 @@
 'use client'
+import { submitReportAction } from '@/actions/submit';
 import { ReportForm } from '@/components/report/report-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Loader2 } from 'lucide-react';
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-type SaltResponse = {
-  salt: string;
+// Server actions
+const getSalt = async (): Promise<{ salt: string }> => {
+  const res = await fetch('/api/salt');
+  return res.json();
 };
 
-type SubmitResponse = {
-  success?: boolean;
-  error?: string;
-};
-
-type ProofOfWorkResult = {
+const submitVerification = async (formData: {
+  clientHash: string;
+  challenge: string;
   nonce: number;
-  hash: string;
+  powDifficulty: number;
+  sliderValue: number;
+}): Promise<{ success?: boolean; error?: string }> => {
+  const res = await fetch('/api/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData),
+  });
+  return res.json();
 };
 
 export default function Home() {
@@ -36,8 +44,7 @@ export default function Home() {
 
     const fetchSalt = async () => {
       try {
-        const res = await fetch("/api/salt");
-        const data: SaltResponse = await res.json();
+        const data = await getSalt();
         setSalt(data.salt);
       } catch (err) {
         setStatus("Error initializing security parameters");
@@ -58,28 +65,17 @@ export default function Home() {
       const clientHash: string = await hashData(salt + anonId);
 
       const challenge: string = Date.now().toString();
-      const { nonce }: ProofOfWorkResult = await generateProofOfWork(
-        challenge,
-        difficulty
-      );
+      const { nonce } = await generateProofOfWork(challenge, difficulty);
 
-      const res: Response = await fetch("/api/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientHash,
-          challenge,
-          nonce,
-          powDifficulty: difficulty,
-          sliderValue: sliderPos,
-        }),
+      const response = await submitReportAction({
+        clientHash,
+        challenge,
+        nonce,
+        powDifficulty: difficulty,
+        sliderValue: sliderPos,
       });
 
-      const newDifficulty: string | null = res.headers.get("X-Pow-Difficulty");
-      if (newDifficulty) setDifficulty(parseInt(newDifficulty));
-
-      const responseData: SubmitResponse = await res.json();
-      if (!res.ok) throw new Error(responseData.error || "Unknown error");
+      if (response.error) throw new Error(response.error);
 
       setStatus("Verification successful");
       setVerified(true);
@@ -105,7 +101,7 @@ export default function Home() {
   const generateProofOfWork = async (
     challenge: string,
     requiredZeros: number
-  ): Promise<ProofOfWorkResult> => {
+  ): Promise<{ nonce: number; hash: string }> => {
     const target = "0".repeat(requiredZeros);
     let nonce = 0;
     const startTime = Date.now();
