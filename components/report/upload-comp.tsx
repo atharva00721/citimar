@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, AlertCircle, Shield } from "lucide-react";
+import { X, AlertCircle, Shield, Upload, FileType } from "lucide-react";
+import { Button } from "../ui/button";
+import { Card, CardContent } from "../ui/card";
+import { Badge } from "../ui/badge";
 
 // Props for handling file selection.
 type FileUploadProps = {
@@ -122,112 +125,107 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect }) => {
   };
 
   return (
-    <div className="p-4 border rounded-md shadow-sm bg-white">
-      <label className="block mb-2 text-sm font-medium text-gray-700">
-        Upload Evidence{" "}
-        <span className="text-sm text-gray-500">(optional, max 5 files)</span>
-      </label>
+    <Card className="border bg-background">
+      <CardContent className="p-4 pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium">Evidence Files</span>
+          <Badge variant="outline" className="text-muted-foreground text-xs">
+            Optional (Max 5)
+          </Badge>
+        </div>
 
-      {/* Privacy notice */}
-      <div className="mb-3 flex items-start text-xs text-gray-600 bg-blue-50 p-2 rounded">
-        <Shield className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-blue-500" />
-        <p>
-          For your privacy, personal metadata will be automatically removed from
-          uploaded files.
-        </p>
-      </div>
+        {/* Privacy notice */}
+        <div className="mb-3 flex items-start text-xs text-muted-foreground bg-blue-50/50 p-2 rounded-md">
+          <Shield className="h-3.5 w-3.5 mr-2 mt-0.5 flex-shrink-0 text-blue-500" />
+          <p>
+            For your privacy, personal metadata will be automatically removed
+            from uploaded files.
+          </p>
+        </div>
 
-      <div
-        className={`border-2 border-dashed p-6 rounded-md text-center ${
-          dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
-        } ${
-          fileError ? "border-red-300" : ""
-        } transition-colors duration-200 ease-in-out`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input
-          type="file"
-          multiple
-          onChange={handleChange}
-          className="hidden"
-          id="file-upload"
-          accept={ACCEPTED_FILE_TYPES.join(",")}
-        />
-        <label
-          htmlFor="file-upload"
-          className="cursor-pointer flex flex-col items-center justify-center"
+        <div
+          className={`border border-dashed p-6 rounded-md text-center ${
+            dragActive ? "border-primary bg-primary/5" : "border-muted"
+          } ${
+            fileError ? "border-destructive/50" : ""
+          } transition-colors duration-200 ease-in-out`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
         >
-          <svg
-            className="w-10 h-10 text-gray-400 mb-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
+          <input
+            type="file"
+            multiple
+            onChange={handleChange}
+            className="hidden"
+            id="file-upload"
+            accept={ACCEPTED_FILE_TYPES.join(",")}
+          />
+          <label
+            htmlFor="file-upload"
+            className="cursor-pointer flex flex-col items-center justify-center"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-            />
-          </svg>
-          <p className="text-sm text-gray-600">
-            Drag and drop files here, or{" "}
-            <span className="text-blue-600 font-semibold">browse</span>
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            Supported formats: Images, PDFs, Word documents, audio and video
-            files (max 10MB each)
-          </p>
-        </label>
-      </div>
-
-      {fileError && (
-        <div className="mt-2 flex items-start text-red-600 text-sm">
-          <AlertCircle className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
-          <span>{fileError}</span>
+            <Upload className="h-8 w-8 text-muted-foreground mb-2 stroke-[1.25px]" />
+            <p className="text-sm text-muted-foreground">
+              <span className="text-primary font-medium">Drop files here</span>{" "}
+              or click to browse
+            </p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Images, PDFs, documents, audio and video (max 10MB)
+            </p>
+          </label>
         </div>
-      )}
 
-      {selectedFiles.length > 0 && (
-        <div className="mt-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">
-            Selected Files ({selectedFiles.length}/5)
-          </h3>
-          <div className="max-h-48 overflow-y-auto space-y-2">
-            {selectedFiles.map((file, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded-md text-sm"
-              >
-                <div className="flex items-center overflow-hidden">
-                  <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center mr-2">
-                    <span className="text-xs font-medium text-blue-700">
-                      {file.name.split(".").pop()?.toUpperCase() || "FILE"}
-                    </span>
-                  </div>
-                  <div className="truncate">
-                    <p className="truncate font-medium">{file.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {formatFileSize(file.size)}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className="ml-2 text-gray-500 hover:text-red-500"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ))}
+        {fileError && (
+          <div className="mt-2 flex items-start text-destructive text-xs">
+            <AlertCircle className="h-3.5 w-3.5 mr-1.5 mt-0.5 flex-shrink-0" />
+            <span>{fileError}</span>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {selectedFiles.length > 0 && (
+          <div className="mt-4 space-y-1">
+            <p className="text-xs font-medium text-muted-foreground mb-2">
+              Selected ({selectedFiles.length}/5)
+            </p>
+            <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+              {selectedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-1.5 px-3 bg-muted/40 rounded-md"
+                >
+                  <div className="flex items-center overflow-hidden gap-2">
+                    <div className="w-7 h-7 bg-primary/10 rounded flex items-center justify-center">
+                      <FileType className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div className="truncate">
+                      <p className="truncate text-xs font-medium">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatFileSize(file.size)}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => removeFile(index)}
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                  >
+                    <X
+                      size={14}
+                      className="text-muted-foreground hover:text-destructive"
+                    />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

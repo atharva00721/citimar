@@ -39,11 +39,13 @@ export async function submitReport(
     const trackingId = generateTrackingId();
 
     // Extract form data
+    const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const files = formData.getAll("evidence") as File[];
 
     // Create object for Zod validation
     const dataToValidate = {
+      title,
       description,
       files,
     };
@@ -94,6 +96,7 @@ export async function submitReport(
     const report = await db.report.create({
       data: {
         trackingId,
+        title,
         content: description,
         status: "SUBMITTED",
         evidence: {
@@ -115,5 +118,27 @@ export async function submitReport(
       success: false,
       error: "Failed to submit report. Please try again.",
     };
+  }
+}
+
+export async function getReportByTrackingId(trackingId: string) {
+  try {
+    const report = await db.report.findUnique({
+      where: {
+        trackingId: trackingId,
+      },
+      include: {
+        evidence: true,
+      },
+    });
+    
+    if (!report) {
+      return { success: false, error: "Report not found" };
+    }
+
+    return { success: true, report };
+  } catch (error) {
+    console.error("Error fetching report:", error);
+    return { success: false, error: "Failed to fetch report" };
   }
 }
