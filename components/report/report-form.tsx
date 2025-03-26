@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { Input } from "../ui/input";
 import { FileUpload } from "./upload-comp";
 import { AlertCircle, CheckCircle, Loader2, Info } from "lucide-react";
 import {
@@ -17,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { batchCleanFiles } from "@/utils/file-sanitizer";
 
 type FormErrors = {
+  title?: string;
   description?: string;
   files?: string[];
   form?: string;
@@ -25,6 +27,7 @@ type FormErrors = {
 export const ReportForm = () => {
   const router = useRouter();
   const [report, setReport] = useState<ReportFormData>({
+    title: "",
     description: "",
     files: [],
   });
@@ -58,7 +61,9 @@ export const ReportForm = () => {
 
         error.errors.forEach((err) => {
           const path = err.path[0] as string;
-          if (path === "description") {
+          if (path === "title") {
+            formattedErrors.title = err.message;
+          } else if (path === "description") {
             formattedErrors.description = err.message;
           } else if (path === "files") {
             if (!formattedErrors.files) formattedErrors.files = [];
@@ -93,6 +98,7 @@ export const ReportForm = () => {
 
       // Create FormData for server action
       const formData = new FormData();
+      formData.append("title", report.title);
       formData.append("description", report.description);
 
       // Add cleaned files to FormData
@@ -114,6 +120,7 @@ export const ReportForm = () => {
 
         // Reset form
         setReport({
+          title: "",
           description: "",
           files: [],
         });
@@ -206,6 +213,35 @@ export const ReportForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Title field */}
+        <div>
+          <label
+            htmlFor="title"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Report Title <span className="text-red-500">*</span>
+          </label>
+          <Input
+            id="title"
+            value={report.title}
+            onChange={(e) => {
+              setReport({ ...report, title: e.target.value });
+              if (errors.title) {
+                setErrors((prev) => ({ ...prev, title: undefined }));
+              }
+            }}
+            className={`w-full ${
+              errors.title
+                ? "border-red-500 focus:ring-red-500"
+                : "focus:ring-blue-500"
+            }`}
+            placeholder="Brief title describing the incident"
+          />
+          {errors.title && (
+            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+          )}
+        </div>
+
         {/* Description field */}
         <div>
           <label

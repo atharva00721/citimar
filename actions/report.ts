@@ -39,11 +39,13 @@ export async function submitReport(
     const trackingId = generateTrackingId();
 
     // Extract form data
+    const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const files = formData.getAll("evidence") as File[];
 
     // Create object for Zod validation
     const dataToValidate = {
+      title,
       description,
       files,
     };
@@ -94,6 +96,7 @@ export async function submitReport(
     const report = await db.report.create({
       data: {
         trackingId,
+        title,
         content: description,
         status: "SUBMITTED",
         evidence: {
