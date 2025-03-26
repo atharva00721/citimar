@@ -14,20 +14,6 @@ const getSalt = async (): Promise<{ salt: string }> => {
   return res.json();
 };
 
-const submitVerification = async (formData: {
-  clientHash: string;
-  challenge: string;
-  nonce: number;
-  powDifficulty: number;
-  sliderValue: number;
-}): Promise<{ success?: boolean; error?: string }> => {
-  const res = await fetch('/api/submit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(formData),
-  });
-  return res.json();
-};
 
 export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);

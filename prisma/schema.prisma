@@ -7,15 +7,25 @@ datasource db {
   url      = env("DIRECT_URL")
 }
 
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique   // e.g., "Financial", "Administrative"
+  description String?             // Optional friendly description
+  icon        String?             // e.g., URL to an icon asset
+  reports     Report[]
+}
 model Report {
-  id         String       @id @default(uuid())
-  trackingId String       @unique
+  id         String    @id @default(uuid())
+  trackingId String    @unique
   title      String
   content    String
   status     ReportStatus
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  evidence   Evidence[]
+  // Rename the previous category field to categoryId to reference the Category model
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  evidence   Evidence[]
 }
 
 model Evidence {

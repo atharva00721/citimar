@@ -2,6 +2,9 @@
   "name": "citimar",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+  "seed": "node --loader ts-node/esm prisma/seed.ts"
+},
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -82,12 +85,15 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^3.0.0",
-    "@types/node": "^20",
+    "@types/node": "^22.13.13",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
   }
 }
+
+
