@@ -6,7 +6,7 @@ import db from "@/lib/prisma";
 import { reportSchema } from "@/schemas/report-schema";
 import { ZodError } from "zod";
 import { ReportStatus } from "@prisma/client";
-// No need to import cleaning functions in server component as they run on client
+import { encrypt, decrypt } from "@/utils/encrypt";
 
 // Generate a secure tracking ID
 function generateTrackingId(): string {
@@ -93,12 +93,16 @@ export async function submitReport(
       })
     );
 
-    // Store report in database
+    // Encrypt the report content before storing
+    const encryptedContent = encrypt(description);
+    const encryptedTitle = encrypt(title);
+
+    // Store report in database with encrypted content
     const report = await db.report.create({
       data: {
         trackingId,
-        title,
-        content: description,
+        title: encryptedTitle,
+        content: encryptedContent,
         status: ReportStatus.SUBMITTED,
         evidence: {
           create: processedFiles,
@@ -137,7 +141,14 @@ export async function getReportByTrackingId(trackingId: string) {
       return { success: false, error: "Report not found" };
     }
 
-    return { success: true, report };
+    // Decrypt the report content and title before sending to client
+    const decryptedReport = {
+      ...report,
+      title: decrypt(report.title) as string,
+      content: decrypt(report.content) as string,
+    };
+
+    return { success: true, report: decryptedReport };
   } catch (error) {
     console.error("Error fetching report:", error);
     return { success: false, error: "Failed to fetch report" };
@@ -227,37 +238,71 @@ export async function updateReportStatus(
         reportStatus = ReportStatus.SUBMITTED;
     }
 
+    // If notes are provided, encrypt them before storing
+    const updatedData: any = {
+      status: reportStatus,
+      updatedAt: new Date(),
+    };
+
+    if (notes) {
+      updatedData.notes = encrypt(notes);
+    }
+
     const updatedReport = await db.report.update({
       where: {
         trackingId,
       },
-      data: {
-        status: reportStatus,
-        updatedAt: new Date(),
-        // In a real application, you might want to store notes in a separate table
-        // with a relation to the report
-      },
+      data: updatedData,
     });
 
-    // Create a status update record (in a real app)
-    // await db.statusUpdate.create({
-    //   data: {
-    //     reportId: report.id,
-    //     previousStatus: report.status,
-    //     newStatus: status,
-    //     notes: notes || "",
-    //     createdBy: "current-user-id", // You would get this from auth
-    //   },
-    // });
+    // Decrypt content and title before returning to client
+    const decryptedReport = {
+      ...updatedReport,
+      title: decrypt(updatedReport.title) as string,
+      content: decrypt(updatedReport.content) as string,
+    };
+
+    // // If notes exist in the updated report, decrypt them too
+    // if (updatedReport.notes) {
+    //   decryptedReport.notes = decrypt(updatedReport.notes) as string;
+    // }
 
     // Revalidate related paths
     revalidatePath(`/report/${trackingId}`);
     revalidatePath("/dashboard");
     revalidatePath("/reports");
 
-    return { success: true, report: updatedReport };
+    return { success: true, report: decryptedReport };
   } catch (error) {
     console.error("Error updating report status:", error);
     return { success: false, error: "Failed to update report status" };
+  }
+}
+
+// Add a function to decrypt reports when fetching multiple reports
+export async function getReports(filter?: any) {
+  try {
+    const reports = await db.report.findMany({
+      where: filter,
+      include: {
+        evidence: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    // Decrypt all report content and titles
+    const decryptedReports = reports.map((report) => ({
+      ...report,
+      title: decrypt(report.title) as string,
+      content: decrypt(report.content) as string,
+      // notes: report.notes ? (decrypt(report.notes) as string) : null,
+    }));
+
+    return { success: true, reports: decryptedReports };
+  } catch (error) {
+    console.error("Error fetching reports:", error);
+    return { success: false, error: "Failed to fetch reports" };
   }
 }

@@ -1,33 +1,31 @@
-
 import { AppSidebar } from "@/components/app-sidebar";
 import AuthGuard from "@/components/AuthGuard";
 import { DataTable } from "@/components/data-table";
 import { SectionCards } from "@/components/section-cards";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-
-import db from "@/lib/prisma";
+import { getReports } from "@/actions/report";
 
 export default async function Page() {
-  // Fetch reports from the database
-  const reports = await db.report.findMany({
-    orderBy: {
-      createdAt: "desc",
-    },
-    include: {
-      evidence: true,
-    },
-  });
+  // Use the getReports function instead of directly accessing the database
+  // This will ensure that reports are properly decrypted
+  const result = await getReports();
+
+  if (!result.success || !result.reports) {
+    // Handle error case
+    return <div>Failed to load reports</div>;
+  }
 
   // Transform database reports to match the expected schema for DataTable
-  const reportsData = reports.map((report, index) => ({
+  // No need to decrypt here since getReports already returns decrypted data
+  const reportsData = result.reports.map((report, index) => ({
     id: index + 1, // Use incremental ID for the table
     trackingId: report.trackingId,
-    title: report.title,
+    title: report.title, // Already decrypted by getReports
     status: report.status,
-    createdAt: report.createdAt.toISOString(),
-    updatedAt: report.updatedAt?.toISOString(),
-    content: report.content,
+    createdAt: report.createdAt.toString(),
+    updatedAt: report.updatedAt?.toString(),
+    content: report.content, // Already decrypted by getReports
     evidenceCount: report.evidence.length,
   }));
 

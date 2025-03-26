@@ -640,7 +640,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
     <Drawer direction={isMobile ? "bottom" : "right"}>
       <DrawerTrigger asChild>
         <Button variant="link" className="text-foreground w-fit px-0 text-left">
-          {item.title}
+          {item.title} {/* Title should already be decrypted */}
         </Button>
       </DrawerTrigger>
       <DrawerContent>
@@ -655,7 +655,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
           <div className="grid gap-2">
             <div className="font-medium">Report Details</div>
             <p className="text-muted-foreground whitespace-pre-wrap">
-              {item.content}
+              {item.content} {/* Content should already be decrypted */}
             </p>
           </div>
           <Separator />
