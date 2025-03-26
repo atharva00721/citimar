@@ -1,6 +1,4 @@
-// app/api/submit/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createRateLimiter } from '@/lib/rateLimiter';
 import crypto from 'crypto';
 
 type SubmitRequest = {
@@ -11,6 +9,8 @@ type SubmitRequest = {
   sliderValue: number;
 };
 
+const COOKIE_NAME = 'submission_count';
+const COOKIE_MAX_AGE = 24 * 60 * 60; // 24 hours in seconds
 let globalRequestCount = 0;
 
 // Validate Proof-of-Work
@@ -34,27 +34,24 @@ export async function POST(request: NextRequest) {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '';
     const userAgent = request.headers.get('user-agent') || '';
 
-    // Initialize rate limiter (in-memory)
-    const limiter = createRateLimiter({
-      windowMs: 24 * 60 * 60 * 1000, // 24 hours
-      max: 3 // Max 3 submissions per day
-    });
-
     // Create unique identifier
     const identifier = crypto.createHash('sha256')
       .update(body.clientHash + ip + userAgent)
       .digest('hex');
+    console.log("Identifier:", identifier);
 
-    // Check rate limit
-    const { success, remaining } = limiter.limit(identifier);
-    if (!success) {
+    // Read submission count from cookies (use read-only method)
+    const submissionCount = parseInt(request.cookies.get(COOKIE_NAME)?.value || '0', 10);
+
+    // If limit exceeded, return an error
+    if (submissionCount >= 3) {
       return NextResponse.json(
         { error: 'Too many submissions (max 3 per day)' },
         { 
           status: 429,
           headers: {
             'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': '86400' // 24h in seconds
+            'X-RateLimit-Reset': '86400'
           }
         }
       );
@@ -82,16 +79,20 @@ export async function POST(request: NextRequest) {
     if (globalRequestCount > 100) newDifficulty = 4;
     else if (globalRequestCount > 50) newDifficulty = 3;
 
+    // Increment submission count
+    const newCount = submissionCount + 1;
+
     return NextResponse.json(
       { 
         success: true,
-        remainingSubmissions: remaining
+        remainingSubmissions: 3 - newCount
       },
       {
         headers: {
+          'Set-Cookie': `${COOKIE_NAME}=${newCount}; Path=/; HttpOnly; Max-Age=${COOKIE_MAX_AGE}`,
           'X-Pow-Difficulty': newDifficulty.toString(),
           'Cache-Control': 'no-store, max-age=0',
-          'X-RateLimit-Remaining': remaining.toString(),
+          'X-RateLimit-Remaining': (3 - newCount).toString(),
           'X-RateLimit-Reset': '86400'
         }
       }

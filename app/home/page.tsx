@@ -1,4 +1,5 @@
 'use client'
+import { useRouter } from 'next/router';
 import { useState, useEffect, ChangeEvent } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -73,6 +74,7 @@ export default function Home() {
       if (!res.ok) throw new Error(responseData.error || 'Unknown error');
 
       setStatus('Submitted successfully');
+      
     } catch (err: unknown) {
       const error = err as Error;
       setStatus(`Error: ${error.message}`);
