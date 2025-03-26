@@ -178,10 +178,10 @@ export async function getReportCounts() {
       resolvedReports,
       growthRate,
       // Sample trends - in a real app, you would calculate these based on historical data
-      totalTrend: 12.5,
-      submittedTrend: -20,
-      inProgressTrend: 12.5,
-      resolvedTrend: 4.5,
+      // totalTrend: 12.5,
+      // submittedTrend: -20,
+      // inProgressTrend: 12.5,
+      // resolvedTrend: 4.5,
     };
   } catch (error) {
     console.error("Error fetching report counts:", error);

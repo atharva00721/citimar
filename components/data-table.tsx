@@ -32,7 +32,6 @@ import {
   IconLayoutColumns,
   IconLoader,
   IconPlus,
-  IconTrendingUp,
   IconClock,
   IconSearch,
 } from "@tabler/icons-react";
@@ -52,19 +51,11 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import { toast } from "sonner";
 import { z } from "zod";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Drawer,
@@ -427,10 +418,12 @@ export function DataTable({
         <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
           <TabsTrigger value="reports">All Reports</TabsTrigger>
           <TabsTrigger value="pending">
-            Pending Review <Badge variant="secondary">3</Badge>
+            Pending Review
+            {/* <Badge variant="secondary">3</Badge> */}
           </TabsTrigger>
           <TabsTrigger value="investigation">
-            Under Investigation <Badge variant="secondary">2</Badge>
+            Under Investigation
+            {/* <Badge variant="secondary">2</Badge> */}
           </TabsTrigger>
           <TabsTrigger value="resolved">Resolved</TabsTrigger>
         </TabsList>
@@ -481,10 +474,10 @@ export function DataTable({
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" size="sm">
+          {/* <Button variant="outline" size="sm">
             <IconPlus />
             <span className="hidden lg:inline">New Report</span>
-          </Button>
+          </Button> */}
         </div>
       </div>
       <TabsContent
