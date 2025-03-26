@@ -5,6 +5,7 @@ import crypto from "crypto";
 import db from "@/lib/prisma";
 import { reportSchema } from "@/schemas/report-schema";
 import { ZodError } from "zod";
+// No need to import cleaning functions in server component as they run on client
 
 // Generate a secure tracking ID
 function generateTrackingId(): string {
@@ -65,10 +66,12 @@ export async function submitReport(
     // Handle file uploads securely
     const processedFiles = await Promise.all(
       files.map(async (file: File) => {
-        // Generate file hash for security
-        const fileHash = `${crypto
-          .randomBytes(8)
-          .toString("hex")}_${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+        // Note: Files should already be cleaned on the client side
+
+        // Generate file hash for security - don't use original filename in hash
+        const randomPrefix = crypto.randomBytes(8).toString("hex");
+        const fileExtension = file.name.split(".").pop() || "";
+        const fileHash = `${randomPrefix}.${fileExtension}`;
 
         // Determine file type for database
         const fileType = getFileTypeCategory(file);

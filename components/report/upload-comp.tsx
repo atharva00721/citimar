@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, AlertCircle } from "lucide-react";
+import { X, AlertCircle, Shield } from "lucide-react";
 
 // Props for handling file selection.
 type FileUploadProps = {
@@ -127,6 +127,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect }) => {
         Upload Evidence{" "}
         <span className="text-sm text-gray-500">(optional, max 5 files)</span>
       </label>
+
+      {/* Privacy notice */}
+      <div className="mb-3 flex items-start text-xs text-gray-600 bg-blue-50 p-2 rounded">
+        <Shield className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-blue-500" />
+        <p>
+          For your privacy, personal metadata will be automatically removed from
+          uploaded files.
+        </p>
+      </div>
+
       <div
         className={`border-2 border-dashed p-6 rounded-md text-center ${
           dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
