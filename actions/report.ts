@@ -5,6 +5,7 @@ import crypto from "crypto";
 import db from "@/lib/prisma";
 import { reportSchema } from "@/schemas/report-schema";
 import { ZodError } from "zod";
+import { ReportStatus } from "@prisma/client";
 // No need to import cleaning functions in server component as they run on client
 
 // Generate a secure tracking ID
@@ -98,7 +99,7 @@ export async function submitReport(
         trackingId,
         title,
         content: description,
-        status: "SUBMITTED",
+        status: ReportStatus.SUBMITTED,
         evidence: {
           create: processedFiles,
         },
@@ -131,7 +132,7 @@ export async function getReportByTrackingId(trackingId: string) {
         evidence: true,
       },
     });
-    
+
     if (!report) {
       return { success: false, error: "Report not found" };
     }
@@ -140,5 +141,123 @@ export async function getReportByTrackingId(trackingId: string) {
   } catch (error) {
     console.error("Error fetching report:", error);
     return { success: false, error: "Failed to fetch report" };
+  }
+}
+
+// New function to fetch report counts by status
+export async function getReportCounts() {
+  try {
+    // Get total reports
+    const totalReports = await db.report.count();
+
+    // Get reports by status
+    const submittedReports = await db.report.count({
+      where: { status: ReportStatus.SUBMITTED },
+    });
+
+    const inProgressReports = await db.report.count({
+      where: { status: ReportStatus.IN_PROGRESS },
+    });
+
+    const resolvedReports = await db.report.count({
+      where: { status: ReportStatus.RESOLVED },
+    });
+
+    // Calculate percentage changes (in a real app you might compare with previous period)
+    // This is placeholder logic - you would implement your own business logic
+    const growthRate =
+      totalReports > 0
+        ? Math.round((resolvedReports / totalReports) * 100) / 10
+        : 0;
+
+    return {
+      success: true,
+      totalReports,
+      submittedReports,
+      inProgressReports,
+      resolvedReports,
+      growthRate,
+      // Sample trends - in a real app, you would calculate these based on historical data
+      totalTrend: 12.5,
+      submittedTrend: -20,
+      inProgressTrend: 12.5,
+      resolvedTrend: 4.5,
+    };
+  } catch (error) {
+    console.error("Error fetching report counts:", error);
+    return {
+      success: false,
+      error: "Failed to fetch report statistics",
+    };
+  }
+}
+
+export async function updateReportStatus(
+  trackingId: string,
+  status: string,
+  notes?: string
+) {
+  try {
+    const report = await db.report.findUnique({
+      where: {
+        trackingId,
+      },
+    });
+
+    if (!report) {
+      return { success: false, error: "Report not found" };
+    }
+
+    // Convert string status to ReportStatus enum
+    let reportStatus: ReportStatus;
+    switch (status) {
+      case "SUBMITTED":
+        reportStatus = ReportStatus.SUBMITTED;
+        break;
+      case "UNDER_REVIEW":
+        reportStatus = ReportStatus.UNDER_REVIEW;
+        break;
+      case "IN_PROGRESS":
+        reportStatus = ReportStatus.IN_PROGRESS;
+        break;
+      case "RESOLVED":
+        reportStatus = ReportStatus.RESOLVED;
+        break;
+      default:
+        reportStatus = ReportStatus.SUBMITTED;
+    }
+
+    const updatedReport = await db.report.update({
+      where: {
+        trackingId,
+      },
+      data: {
+        status: reportStatus,
+        updatedAt: new Date(),
+        // In a real application, you might want to store notes in a separate table
+        // with a relation to the report
+      },
+    });
+
+    // Create a status update record (in a real app)
+    // await db.statusUpdate.create({
+    //   data: {
+    //     reportId: report.id,
+    //     previousStatus: report.status,
+    //     newStatus: status,
+    //     notes: notes || "",
+    //     createdBy: "current-user-id", // You would get this from auth
+    //   },
+    // });
+
+    // Revalidate related paths
+    revalidatePath(`/report/${trackingId}`);
+    revalidatePath("/dashboard");
+    revalidatePath("/reports");
+
+    return { success: true, report: updatedReport };
+  } catch (error) {
+    console.error("Error updating report status:", error);
+    return { success: false, error: "Failed to update report status" };
   }
 }

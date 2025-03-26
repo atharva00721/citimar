@@ -1,12 +1,7 @@
-<<<<<<< HEAD
-import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-=======
 // app/api/submit/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createRateLimiter } from "@/lib/rateLimiter";
 import crypto from "crypto";
->>>>>>> 967e459ec1385a1da8e4e5a9e0ce1cd0dc29bf36
 
 type SubmitRequest = {
   clientHash: string;
@@ -47,20 +42,16 @@ export async function POST(request: NextRequest) {
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
     const userAgent = request.headers.get("user-agent") || "";
 
-<<<<<<< HEAD
-=======
     // Initialize rate limiter (in-memory)
     const limiter = createRateLimiter({
       windowMs: 24 * 60 * 60 * 1000, // 24 hours
       max: 3, // Max 3 submissions per day
     });
 
->>>>>>> 967e459ec1385a1da8e4e5a9e0ce1cd0dc29bf36
     // Create unique identifier
     const identifier = crypto
       .createHash("sha256")
       .update(body.clientHash + ip + userAgent)
-<<<<<<< HEAD
       .digest('hex');
     console.log("Identifier:", identifier);
 
@@ -69,28 +60,14 @@ export async function POST(request: NextRequest) {
 
     // If limit exceeded, return an error
     if (submissionCount >= 3) {
-=======
-      .digest("hex");
-
-    // Check rate limit
-    const { success, remaining } = limiter.limit(identifier);
-    console.log("Rate limit:", success, remaining);
-    if (!success) {
->>>>>>> 967e459ec1385a1da8e4e5a9e0ce1cd0dc29bf36
       return NextResponse.json(
         { error: "Too many submissions (max 3 per day)" },
         {
           status: 429,
           headers: {
-<<<<<<< HEAD
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': '86400'
-          }
-=======
             "X-RateLimit-Remaining": "0",
             "X-RateLimit-Reset": "86400", // 24h in seconds
           },
->>>>>>> 967e459ec1385a1da8e4e5a9e0ce1cd0dc29bf36
         }
       );
     }
@@ -123,7 +100,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-<<<<<<< HEAD
         remainingSubmissions: 3 - newCount
       },
       {
@@ -134,17 +110,6 @@ export async function POST(request: NextRequest) {
           'X-RateLimit-Remaining': (3 - newCount).toString(),
           'X-RateLimit-Reset': '86400'
         }
-=======
-        remainingSubmissions: remaining,
-      },
-      {
-        headers: {
-          "X-Pow-Difficulty": newDifficulty.toString(),
-          "Cache-Control": "no-store, max-age=0",
-          "X-RateLimit-Remaining": remaining.toString(),
-          "X-RateLimit-Reset": "86400",
-        },
->>>>>>> 967e459ec1385a1da8e4e5a9e0ce1cd0dc29bf36
       }
     );
   } catch (err: unknown) {
