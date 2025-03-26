@@ -1,18 +1,11 @@
-<<<<<<< HEAD
 'use client'
-import { useRouter } from 'next/router';
+import { ReportForm } from '@/components/report/report-form';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
+import { Loader2 } from 'lucide-react';
 import { useState, useEffect, ChangeEvent } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-=======
-"use client";
-import { ReportForm } from "@/components/report/report-form";
-import { useState, useEffect } from "react";
-import { v4 as uuidv4 } from "uuid";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
->>>>>>> 967e459ec1385a1da8e4e5a9e0ce1cd0dc29bf36
 
 type SaltResponse = {
   salt: string;
@@ -88,13 +81,8 @@ export default function Home() {
       const responseData: SubmitResponse = await res.json();
       if (!res.ok) throw new Error(responseData.error || "Unknown error");
 
-<<<<<<< HEAD
-      setStatus('Submitted successfully');
-      
-=======
       setStatus("Verification successful");
       setVerified(true);
->>>>>>> 967e459ec1385a1da8e4e5a9e0ce1cd0dc29bf36
     } catch (err: unknown) {
       const error = err as Error;
       setStatus(`Error: ${error.message}`);
