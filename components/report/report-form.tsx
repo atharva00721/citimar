@@ -6,10 +6,15 @@ import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { FileUpload } from "./upload-comp";
 import { AlertCircle, CheckCircle, Loader2, Info } from "lucide-react";
-import { reportSchema, validateFiles, ReportFormData } from "@/schemas/report-schema";
+import {
+  reportSchema,
+  validateFiles,
+  ReportFormData,
+} from "@/schemas/report-schema";
 import { ZodError } from "zod";
 import { submitReport } from "@/actions/report";
 import { useRouter } from "next/navigation";
+import { batchCleanFiles } from "@/utils/file-sanitizer";
 
 type FormErrors = {
   description?: string;
@@ -35,14 +40,14 @@ export const ReportForm = () => {
     try {
       // Validate form with Zod schema
       reportSchema.parse(report);
-      
+
       // Additional file validation for better error messages
       const fileValidation = validateFiles(report.files);
       if (!fileValidation.valid) {
         setErrors({ files: fileValidation.errors });
         return false;
       }
-      
+
       // Clear errors if validation passes
       setErrors({});
       return true;
@@ -50,7 +55,7 @@ export const ReportForm = () => {
       if (error instanceof ZodError) {
         // Convert Zod errors to our form errors format
         const formattedErrors: FormErrors = {};
-        
+
         error.errors.forEach((err) => {
           const path = err.path[0] as string;
           if (path === "description") {
@@ -62,7 +67,7 @@ export const ReportForm = () => {
             formattedErrors.form = "Please check the form for errors";
           }
         });
-        
+
         setErrors(formattedErrors);
       } else {
         // Handle unexpected errors
@@ -83,39 +88,45 @@ export const ReportForm = () => {
     setSubmitStatus({});
 
     try {
+      // Clean metadata from files before uploading and automatically rename them
+      const cleanedFiles = await batchCleanFiles(report.files, true);
+
       // Create FormData for server action
       const formData = new FormData();
       formData.append("description", report.description);
-      
-      // Add files to FormData
-      report.files.forEach((file) => {
+
+      // Add cleaned files to FormData
+      cleanedFiles.forEach((file) => {
         formData.append("evidence", file);
       });
-      
+
       // Directly call the server action
       const result = await submitReport(formData);
-      
+
       if (result.success) {
         // Show success message
         setSubmitStatus({
           success: true,
-          message: "Your report has been submitted successfully. Keep this tracking ID for reference.",
+          message:
+            "Your report has been submitted successfully. Keep this tracking ID for reference.",
           trackingId: result.trackingId,
         });
-        
+
         // Reset form
         setReport({
           description: "",
           files: [],
         });
-        
+
         // Refresh the page data
         router.refresh();
       } else {
         // Show error message
         setSubmitStatus({
           success: false,
-          message: result.error || "There was an error submitting your report. Please try again.",
+          message:
+            result.error ||
+            "There was an error submitting your report. Please try again.",
         });
       }
     } catch (error) {
@@ -147,7 +158,8 @@ export const ReportForm = () => {
             {submitStatus.trackingId && (
               <div className="mt-2">
                 <p className="text-sm text-gray-600 mb-1">
-                  Please save this tracking ID to check your report status in the future:
+                  Please save this tracking ID to check your report status in
+                  the future:
                 </p>
                 <p className="p-2 bg-white border border-green-100 rounded font-mono text-sm flex justify-between items-center">
                   <span>{submitStatus.trackingId}</span>
@@ -157,7 +169,9 @@ export const ReportForm = () => {
                     size="sm"
                     className="text-blue-500 hover:text-blue-700"
                     onClick={() => {
-                      navigator.clipboard.writeText(submitStatus.trackingId || "");
+                      navigator.clipboard.writeText(
+                        submitStatus.trackingId || ""
+                      );
                     }}
                   >
                     Copy
@@ -183,7 +197,10 @@ export const ReportForm = () => {
       {/* Form validation error */}
       {errors.form && (
         <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-md flex items-start">
-          <Info className="text-amber-500 mr-3 mt-0.5 flex-shrink-0" size={18} />
+          <Info
+            className="text-amber-500 mr-3 mt-0.5 flex-shrink-0"
+            size={18}
+          />
           <p className="text-amber-800">{errors.form}</p>
         </div>
       )}
@@ -223,17 +240,21 @@ export const ReportForm = () => {
 
         {/* File upload */}
         <div>
-          <FileUpload onFileSelect={(files) => {
-            setReport({ ...report, files });
-            if (errors.files?.length) {
-              setErrors((prev) => ({ ...prev, files: undefined }));
-            }
-          }} />
-          
+          <FileUpload
+            onFileSelect={(files) => {
+              setReport({ ...report, files });
+              if (errors.files?.length) {
+                setErrors((prev) => ({ ...prev, files: undefined }));
+              }
+            }}
+          />
+
           {errors.files && errors.files.length > 0 && (
             <div className="mt-2">
               {errors.files.map((error, index) => (
-                <p key={index} className="text-sm text-red-600">{error}</p>
+                <p key={index} className="text-sm text-red-600">
+                  {error}
+                </p>
               ))}
             </div>
           )}
