@@ -1,21 +1,13 @@
-// app/admin/login/page.tsx
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { LoginForm } from "@/components/login-form";
 
 export default function AdminLogin() {
-    const router = useRouter();
-
-    return (
-        <div className="max-w-md mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Admin Login</h1>
-            <button
-                onClick={() => signIn("google", { callbackUrl: '/admin/dashboard' })}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-            >
-                Sign in with Google
-            </button>
-        </div>
-    );
+  return (
+    <div className="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        <LoginForm />
+      </div>
+    </div>
+  );
 }

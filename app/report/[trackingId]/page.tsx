@@ -8,7 +8,8 @@ export default async function ReportPage({
 }: {
   params: { trackingId: string };
 }) {
-  const trackingId = await params.trackingId;
+  // Remove the await - params.trackingId is already a string, not a Promise
+  const trackingId = params.trackingId;
   const { success, report } = await getReportByTrackingId(trackingId);
 
   if (!success || !report) {

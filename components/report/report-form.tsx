@@ -1,7 +1,7 @@
 // components/ReportForm.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Input } from "../ui/input";
@@ -16,19 +16,28 @@ import { ZodError } from "zod";
 import { submitReport } from "@/actions/report";
 import { useRouter } from "next/navigation";
 import { batchCleanFiles } from "@/utils/file-sanitizer";
-import {
-
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from "../ui/card";
+import { CardHeader, CardTitle, CardDescription, CardFooter } from "../ui/card";
 import { Label } from "../ui/label";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+
+// Define Category type for dropdown
+type Category = {
+  id: string;
+  name: string;
+  description?: string | null;
+};
 
 type FormErrors = {
   title?: string;
   description?: string;
+  categoryId?: string;
   files?: string[];
   form?: string;
 };
@@ -38,15 +47,37 @@ export const ReportForm = () => {
   const [report, setReport] = useState<ReportFormData>({
     title: "",
     description: "",
+    categoryId: "", // Initialize with empty categoryId
     files: [],
   });
+  const [categories, setCategories] = useState<Category[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [submitStatus, setSubmitStatus] = useState<{
     success?: boolean;
     message?: string;
     trackingId?: string;
   }>({});
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories");
+        const data = await response.json();
+        if (data.success && data.categories) {
+          setCategories(data.categories);
+        }
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const validateForm = (): boolean => {
     try {
@@ -74,6 +105,8 @@ export const ReportForm = () => {
             formattedErrors.title = err.message;
           } else if (path === "description") {
             formattedErrors.description = err.message;
+          } else if (path === "categoryId") {
+            formattedErrors.categoryId = err.message;
           } else if (path === "files") {
             if (!formattedErrors.files) formattedErrors.files = [];
             formattedErrors.files.push(err.message);
@@ -109,6 +142,7 @@ export const ReportForm = () => {
       const formData = new FormData();
       formData.append("title", report.title);
       formData.append("description", report.description);
+      formData.append("categoryId", report.categoryId);
 
       // Add cleaned files to FormData
       cleanedFiles.forEach((file) => {
@@ -131,6 +165,7 @@ export const ReportForm = () => {
         setReport({
           title: "",
           description: "",
+          categoryId: "",
           files: [],
         });
 
@@ -253,6 +288,41 @@ export const ReportForm = () => {
           />
           {errors.title && (
             <p className="text-xs text-destructive">{errors.title}</p>
+          )}
+        </div>
+
+        {/* Category dropdown */}
+        <div className="space-y-2">
+          <Label htmlFor="category" className="text-sm font-medium">
+            Category <span className="text-destructive">*</span>
+          </Label>
+          <Select
+            disabled={isLoading}
+            value={report.categoryId}
+            onValueChange={(value) => {
+              setReport({ ...report, categoryId: value });
+              if (errors.categoryId) {
+                setErrors((prev) => ({ ...prev, categoryId: undefined }));
+              }
+            }}
+          >
+            <SelectTrigger
+              className={
+                errors.categoryId ? "border-destructive ring-destructive" : ""
+              }
+            >
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.categoryId && (
+            <p className="text-xs text-destructive">{errors.categoryId}</p>
           )}
         </div>
 

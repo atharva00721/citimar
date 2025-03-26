@@ -42,12 +42,14 @@ export async function submitReport(
     // Extract form data
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
+    const categoryId = formData.get("categoryId") as string;
     const files = formData.getAll("evidence") as File[];
 
     // Create object for Zod validation
     const dataToValidate = {
       title,
       description,
+      categoryId,
       files,
     };
 
@@ -104,6 +106,7 @@ export async function submitReport(
         title: encryptedTitle,
         content: encryptedContent,
         status: ReportStatus.SUBMITTED,
+        categoryId: categoryId, // Add the category ID from form
         evidence: {
           create: processedFiles,
         },
@@ -134,6 +137,7 @@ export async function getReportByTrackingId(trackingId: string) {
       },
       include: {
         evidence: true,
+        category: true, // Include the category information
       },
     });
 
@@ -269,7 +273,7 @@ export async function updateReportStatus(
 
     // Revalidate related paths
     revalidatePath(`/report/${trackingId}`);
-    revalidatePath("/dashboard");
+    revalidatePath("/admin/dashboard");
     revalidatePath("/reports");
 
     return { success: true, report: decryptedReport };
@@ -286,6 +290,7 @@ export async function getReports(filter?: any) {
       where: filter,
       include: {
         evidence: true,
+        category: true, // Include the category information
       },
       orderBy: {
         createdAt: "desc",

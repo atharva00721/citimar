@@ -91,7 +91,7 @@ export function ReportDetails({ report }: { report: Report }) {
     <div className="container py-8 max-w-3xl mx-auto px-4">
       <div className="mb-8">
         <Link
-          href="/dashboard"
+          href="/admin/dashboard"
           className="inline-flex items-center text-sm font-medium text-muted-foreground mb-6 hover:text-primary transition-colors"
         >
           <IconArrowLeft className="mr-2 size-4" />

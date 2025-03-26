@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   DndContext,
   KeyboardSensor,
@@ -34,6 +35,7 @@ import {
   IconPlus,
   IconClock,
   IconSearch,
+  IconX,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import {
@@ -105,10 +107,15 @@ export const schema = z.object({
   updatedAt: z.string().optional(),
   content: z.string(),
   evidenceCount: z.number().optional(),
+  category: z.object({
+    id: z.string(),
+    name: z.string(),
+    icon: z.string().optional(),
+  }),
 });
 
 // Create a separate component for the drag handle
-function DragHandle({ id }: { id: number }) {
+const DragHandle = React.memo(({ id }: { id: number }) => {
   const { attributes, listeners } = useSortable({
     id,
   });
@@ -125,10 +132,11 @@ function DragHandle({ id }: { id: number }) {
       <span className="sr-only">Drag to reorder</span>
     </Button>
   );
-}
+});
+DragHandle.displayName = "DragHandle";
 
-// Updated columns for reports data
-const columns: ColumnDef<z.infer<typeof schema>>[] = [
+// Updated columns for reports data - memoized to prevent unnecessary renders
+const createColumns = (): ColumnDef<z.infer<typeof schema>>[] => [
   {
     id: "drag",
     header: () => null,
@@ -188,6 +196,20 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       );
     },
     enableHiding: false,
+  },
+  {
+    accessorKey: "category.name",
+    header: "Category",
+    cell: ({ row }) => {
+      return (
+        <Badge variant="outline" className="text-muted-foreground">
+          {row.original.category?.icon && (
+            <span className="mr-1">{row.original.category.icon}</span>
+          )}
+          {row.original.category?.name || "Uncategorized"}
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: "status",
@@ -301,60 +323,129 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
   },
 ];
 
-function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
-  const { transform, transition, setNodeRef, isDragging } = useSortable({
-    id: row.original.id,
-  });
+// Memoized draggable row for better performance
+const DraggableRow = React.memo(
+  ({ row }: { row: Row<z.infer<typeof schema>> }) => {
+    const { transform, transition, setNodeRef, isDragging } = useSortable({
+      id: row.original.id,
+    });
 
-  return (
-    <TableRow
-      data-state={row.getIsSelected() && "selected"}
-      data-dragging={isDragging}
-      ref={setNodeRef}
-      className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition: transition,
-      }}
-    >
-      {row.getVisibleCells().map((cell) => (
-        <TableCell key={cell.id}>
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
-      ))}
-    </TableRow>
-  );
-}
+    return (
+      <TableRow
+        data-state={row.getIsSelected() && "selected"}
+        data-dragging={isDragging}
+        ref={setNodeRef}
+        className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
+        style={{
+          transform: CSS.Transform.toString(transform),
+          transition: transition,
+        }}
+      >
+        {row.getVisibleCells().map((cell) => (
+          <TableCell key={cell.id}>
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        ))}
+      </TableRow>
+    );
+  }
+);
+DraggableRow.displayName = "DraggableRow";
+
+// Optimized pagination controls
+const PaginationControls = React.memo(
+  ({ table }: { table: ReturnType<typeof useReactTable<z.infer<typeof schema>>> }) => {
+    return (
+      <div className="flex w-fit items-center gap-2 lg:ml-0">
+        <Button
+          variant="outline"
+          className="hidden h-8 w-8 p-0 lg:flex"
+          onClick={() => table.setPageIndex(0)}
+          disabled={!table.getCanPreviousPage()}
+        >
+          <span className="sr-only">Go to first page</span>
+          <IconChevronsLeft />
+        </Button>
+        <Button
+          variant="outline"
+          className="size-8"
+          size="icon"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          <span className="sr-only">Go to previous page</span>
+          <IconChevronLeft />
+        </Button>
+        <Button
+          variant="outline"
+          className="size-8"
+          size="icon"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          <span className="sr-only">Go to next page</span>
+          <IconChevronRight />
+        </Button>
+        <Button
+          variant="outline"
+          className="hidden size-8 lg:flex"
+          size="icon"
+          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+          disabled={!table.getCanNextPage()}
+        >
+          <span className="sr-only">Go to last page</span>
+          <IconChevronsRight />
+        </Button>
+      </div>
+    );
+  }
+);
+PaginationControls.displayName = "PaginationControls";
 
 export function DataTable({
   data: initialData,
 }: {
   data: z.infer<typeof schema>[];
 }) {
-  const [data, setData] = React.useState(() => initialData);
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [pagination, setPagination] = React.useState({
+  const [data, setData] = useState(initialData);
+  const [rowSelection, setRowSelection] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
   const sortableId = React.useId();
+
+  // Optimize sensors with useCallback
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
     useSensor(TouchSensor, {}),
     useSensor(KeyboardSensor, {})
   );
 
-  const dataIds = React.useMemo<UniqueIdentifier[]>(
+  // Memoize columns to prevent unnecessary re-renders
+  const columns = useMemo(() => createColumns(), []);
+
+  // Extract unique categories for the filter dropdown - memoized
+  const categories = useMemo(() => {
+    const uniqueCategories = new Map();
+    data.forEach((item) => {
+      if (item.category && !uniqueCategories.has(item.category.id)) {
+        uniqueCategories.set(item.category.id, item.category);
+      }
+    });
+    return Array.from(uniqueCategories.values());
+  }, [data]);
+
+  // Memoize dataIds for DndContext
+  const dataIds = useMemo<UniqueIdentifier[]>(
     () => data?.map(({ id }) => id) || [],
     [data]
   );
 
+  // Optimize table initialization with memoization
   const table = useReactTable({
     data,
     columns,
@@ -380,16 +471,44 @@ export function DataTable({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (active && over && active.id !== over.id) {
-      setData((data) => {
-        const oldIndex = dataIds.indexOf(active.id);
-        const newIndex = dataIds.indexOf(over.id);
-        return arrayMove(data, oldIndex, newIndex);
-      });
-    }
-  }
+  // Optimize drag end handler with useCallback
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (active && over && active.id !== over.id) {
+        setData((data) => {
+          const oldIndex = dataIds.indexOf(active.id);
+          const newIndex = dataIds.indexOf(over.id);
+          return arrayMove(data, oldIndex, newIndex);
+        });
+      }
+    },
+    [dataIds]
+  );
+
+  // Memoized filter handlers
+  const handleTitleFilterChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      table.getColumn("title")?.setFilterValue(event.target.value);
+    },
+    [table]
+  );
+
+  // Memoized category filter handler
+  const handleCategoryFilterChange = useCallback(
+    (categoryName: string) => {
+      table.getColumn("category.name")?.setFilterValue(categoryName);
+    },
+    [table]
+  );
+
+  // Memoized page size handler
+  const handlePageSizeChange = useCallback(
+    (value: string) => {
+      table.setPageSize(Number(value));
+    },
+    [table]
+  );
 
   return (
     <Tabs
@@ -435,12 +554,49 @@ export function DataTable({
               value={
                 (table.getColumn("title")?.getFilterValue() as string) ?? ""
               }
-              onChange={(event) =>
-                table.getColumn("title")?.setFilterValue(event.target.value)
-              }
+              onChange={handleTitleFilterChange}
             />
             <IconSearch className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
           </div>
+
+          {/* Category filter dropdown - optimized with memoized handler */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex gap-1">
+                <span>Category</span>
+                {table.getColumn("category.name")?.getFilterValue() ? (
+                  <Badge variant="secondary" className="rounded-sm px-1">
+                    1
+                  </Badge>
+                ) : null}
+                <IconChevronDown className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => handleCategoryFilterChange("")}>
+                All Categories
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {categories.map((category) => (
+                <DropdownMenuCheckboxItem
+                  key={category.id}
+                  checked={
+                    table.getColumn("category.name")?.getFilterValue() ===
+                    category.name
+                  }
+                  onCheckedChange={() =>
+                    handleCategoryFilterChange(category.name)
+                  }
+                >
+                  {category.icon && (
+                    <span className="mr-2">{category.icon}</span>
+                  )}
+                  {category.name}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -474,16 +630,30 @@ export function DataTable({
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-          {/* <Button variant="outline" size="sm">
-            <IconPlus />
-            <span className="hidden lg:inline">New Report</span>
-          </Button> */}
         </div>
       </div>
       <TabsContent
         value="reports"
         className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
       >
+        {/* Filter badges */}
+        <div className="flex flex-wrap gap-2">
+          {/* {table.getColumn("category.name")?.getFilterValue() && (
+            <Badge variant="secondary" className="gap-1">
+              Category: {table.getColumn("category.name")?.getFilterValue() as string}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="size-4 p-0 ml-1" 
+                onClick={() => table.getColumn("category.name")?.setFilterValue("")}
+              >
+                <IconX className="size-3" />
+                <span className="sr-only">Remove filter</span>
+              </Button>
+            </Badge>
+          )} */}
+        </div>
+
         <div className="overflow-hidden rounded-lg border">
           <DndContext
             collisionDetection={closestCenter}
@@ -496,18 +666,16 @@ export function DataTable({
               <TableHeader className="bg-muted sticky top-0 z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id} colSpan={header.colSpan}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      );
-                    })}
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id} colSpan={header.colSpan}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    ))}
                   </TableRow>
                 ))}
               </TableHeader>
@@ -517,6 +685,7 @@ export function DataTable({
                     items={dataIds}
                     strategy={verticalListSortingStrategy}
                   >
+                    {/* Only render visible rows for better performance */}
                     {table.getRowModel().rows.map((row) => (
                       <DraggableRow key={row.id} row={row} />
                     ))}
@@ -547,9 +716,7 @@ export function DataTable({
               </Label>
               <Select
                 value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => {
-                  table.setPageSize(Number(value));
-                }}
+                onValueChange={handlePageSizeChange}
               >
                 <SelectTrigger size="sm" className="w-20" id="rows-per-page">
                   <SelectValue
@@ -569,47 +736,7 @@ export function DataTable({
               Page {table.getState().pagination.pageIndex + 1} of{" "}
               {table.getPageCount()}
             </div>
-            <div className="ml-auto flex items-center gap-2 lg:ml-0">
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to first page</span>
-                <IconChevronsLeft />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to previous page</span>
-                <IconChevronLeft />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to next page</span>
-                <IconChevronRight />
-              </Button>
-              <Button
-                variant="outline"
-                className="hidden size-8 lg:flex"
-                size="icon"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to last page</span>
-                <IconChevronsRight />
-              </Button>
-            </div>
+            <PaginationControls table={table} />
           </div>
         </div>
       </TabsContent>
@@ -632,76 +759,90 @@ export function DataTable({
   );
 }
 
-// For the TableCellViewer, let's adapt it for report viewing
-function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
-  const isMobile = useIsMobile();
+// TableCellViewer component optimized with memoization
+const TableCellViewer = React.memo(
+  ({ item }: { item: z.infer<typeof schema> }) => {
+    const isMobile = useIsMobile();
 
-  return (
-    <Drawer direction={isMobile ? "bottom" : "right"}>
-      <DrawerTrigger asChild>
-        <Button variant="link" className="text-foreground w-fit px-0 text-left">
-          {item.title} {/* Title should already be decrypted */}
-        </Button>
-      </DrawerTrigger>
-      <DrawerContent>
-        <DrawerHeader className="gap-1">
-          <DrawerTitle>Report {item.trackingId}</DrawerTitle>
-          <DrawerDescription>
-            {item.title} - Submitted{" "}
-            {new Date(item.createdAt).toLocaleDateString()}
-          </DrawerDescription>
-        </DrawerHeader>
-        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
-          <div className="grid gap-2">
-            <div className="font-medium">Report Details</div>
-            <p className="text-muted-foreground whitespace-pre-wrap">
-              {item.content} {/* Content should already be decrypted */}
-            </p>
-          </div>
-          <Separator />
-          <div className="grid gap-2">
-            <div className="font-medium">Status</div>
-            <div className="flex items-center gap-2">
-              {item.status === "RESOLVED" ? (
-                <IconCircleCheckFilled className="size-4 text-green-500" />
-              ) : item.status === "IN_PROGRESS" ? (
-                <IconLoader className="size-4 text-blue-500 animate-spin" />
-              ) : (
-                <IconClock className="size-4 text-yellow-500" />
-              )}
-              <span>
-                {item.status === "SUBMITTED"
-                  ? "Pending Review"
-                  : item.status === "IN_PROGRESS"
-                  ? "Under Investigation"
-                  : item.status === "RESOLVED"
-                  ? "Resolved"
-                  : item.status}
-              </span>
-            </div>
-          </div>
-          {item.evidenceCount && item.evidenceCount > 0 && (
-            <>
-              <Separator />
-              <div className="grid gap-2">
-                <div className="font-medium">Evidence Files</div>
-                <div className="text-muted-foreground">
-                  {item.evidenceCount}{" "}
-                  {item.evidenceCount === 1 ? "file" : "files"} attached
-                </div>
+    return (
+      <Drawer direction={isMobile ? "bottom" : "right"}>
+        <DrawerTrigger asChild>
+          <Button
+            variant="link"
+            className="text-foreground w-fit px-0 text-left"
+          >
+            {item.title} {/* Title should already be decrypted */}
+          </Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader className="gap-1">
+            <DrawerTitle>Report {item.trackingId}</DrawerTitle>
+            <DrawerDescription>
+              {item.title} - Submitted{" "}
+              {new Date(item.createdAt).toLocaleDateString()}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+            <div className="grid gap-2">
+              <div className="font-medium">Category</div>
+              <div className="flex items-center gap-2">
+                {item.category?.icon && <span>{item.category.icon}</span>}
+                <span>{item.category?.name || "Uncategorized"}</span>
               </div>
-            </>
-          )}
-        </div>
-        <DrawerFooter>
-          <Link href={`/report/${item.trackingId}`} passHref>
-            <Button className="w-full">View Full Report</Button>
-          </Link>
-          <DrawerClose asChild>
-            <Button variant="outline">Close</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
-  );
-}
+            </div>
+            <Separator />
+            <div className="grid gap-2">
+              <div className="font-medium">Report Details</div>
+              <p className="text-muted-foreground whitespace-pre-wrap">
+                {item.content} {/* Content should already be decrypted */}
+              </p>
+            </div>
+            <Separator />
+            <div className="grid gap-2">
+              <div className="font-medium">Status</div>
+              <div className="flex items-center gap-2">
+                {item.status === "RESOLVED" ? (
+                  <IconCircleCheckFilled className="size-4 text-green-500" />
+                ) : item.status === "IN_PROGRESS" ? (
+                  <IconLoader className="size-4 text-blue-500 animate-spin" />
+                ) : (
+                  <IconClock className="size-4 text-yellow-500" />
+                )}
+                <span>
+                  {item.status === "SUBMITTED"
+                    ? "Pending Review"
+                    : item.status === "IN_PROGRESS"
+                    ? "Under Investigation"
+                    : item.status === "RESOLVED"
+                    ? "Resolved"
+                    : item.status}
+                </span>
+              </div>
+            </div>
+            {item.evidenceCount && item.evidenceCount > 0 && (
+              <>
+                <Separator />
+                <div className="grid gap-2">
+                  <div className="font-medium">Evidence Files</div>
+                  <div className="text-muted-foreground">
+                    {item.evidenceCount}{" "}
+                    {item.evidenceCount === 1 ? "file" : "files"} attached
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <DrawerFooter>
+            <Link href={`/report/${item.trackingId}`} passHref>
+              <Button className="w-full">View Full Report</Button>
+            </Link>
+            <DrawerClose asChild>
+              <Button variant="outline">Close</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+);
+TableCellViewer.displayName = "TableCellViewer";

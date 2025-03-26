@@ -43,25 +43,22 @@ export const fileSchema = z.custom<File>(
   }
 );
 
-// Main report schema
+// Define the schema for report validation
 export const reportSchema = z.object({
-  title: z
-    .string()
-    .min(3, "Title must be at least 3 characters long")
-    .max(100, "Title cannot exceed 100 characters"),
-
+  title: z.string().min(5, "Title must be at least 5 characters long").max(100),
   description: z
     .string()
-    .min(20, "Description must be at least 20 characters long")
-    .max(5000, "Description cannot exceed 5000 characters"),
-
+    .min(10, "Description must be at least 10 characters long"),
+  categoryId: z.string().uuid("Please select a valid category"),
   files: z
-    .array(fileSchema)
-    .max(5, "You can upload a maximum of 5 files")
-    .optional()
-    .default([]),
+    .array(z.instanceof(File))
+    .min(1, "At least one file must be uploaded")
+    .max(10, "Maximum 10 files allowed")
+
+    .transform((files) => (Array.isArray(files) ? files : [])),
 });
 
+// Type for form data
 export type ReportFormData = z.infer<typeof reportSchema>;
 
 // Helper function to validate files individually with detailed errors
@@ -94,5 +91,5 @@ export const validateFiles = (
 export const FILE_CONSTRAINTS = {
   ACCEPTED_FILE_TYPES,
   MAX_FILE_SIZE,
-  MAX_FILES: 5,
+  MAX_FILES: 10,
 };

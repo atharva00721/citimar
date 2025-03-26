@@ -25,7 +25,7 @@ model Report {
   category   Category  @relation(fields: [categoryId], references: [id])
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-  evidence   Evidence[]
+  evidence   Evidence[]
 }
 
 model Evidence {

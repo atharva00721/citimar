@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "prisma": {
-  "seed": "node --loader ts-node/esm prisma/seed.ts"
-},
+    "seed": "node --loader ts-node/esm prisma/seed.ts"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -95,5 +95,3 @@
     "typescript": "^5.8.2"
   }
 }
-
-
