@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Input } from "../ui/input";
 import { FileUpload } from "./upload-comp";
-import { AlertCircle, CheckCircle, Loader2, Info } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, Info, Copy } from "lucide-react";
 import {
   reportSchema,
   validateFiles,
@@ -16,6 +16,16 @@ import { ZodError } from "zod";
 import { submitReport } from "@/actions/report";
 import { useRouter } from "next/navigation";
 import { batchCleanFiles } from "@/utils/file-sanitizer";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "../ui/card";
+import { Label } from "../ui/label";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 type FormErrors = {
   title?: string;
@@ -38,7 +48,6 @@ export const ReportForm = () => {
     message?: string;
     trackingId?: string;
   }>({});
-  
 
   const validateForm = (): boolean => {
     try {
@@ -115,7 +124,7 @@ export const ReportForm = () => {
         setSubmitStatus({
           success: true,
           message:
-            "Your report has been submitted successfully. Keep this tracking ID for reference.",
+            "Your report has been submitted successfully. Redirecting to tracking page...",
           trackingId: result.trackingId,
         });
 
@@ -128,6 +137,13 @@ export const ReportForm = () => {
 
         // Refresh the page data
         router.refresh();
+
+        // Redirect to tracking page after a brief delay to let the user see the success message
+        setTimeout(() => {
+          if (result.trackingId) {
+            router.push(`/report/${result.trackingId}`);
+          }
+        }, 1500);
       } else {
         // Show error message
         setSubmitStatus({
@@ -149,79 +165,79 @@ export const ReportForm = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">
-        Submit Corruption Report
-      </h2>
+    <div className="max-w-2xl mx-auto">
+      <CardHeader className="px-0 pt-0">
+        <CardTitle className="text-xl">Submit Corruption Report</CardTitle>
+        <CardDescription>
+          Provide details about your report. All submissions are confidential.
+        </CardDescription>
+      </CardHeader>
 
       {/* Success message */}
       {submitStatus.success && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md flex items-start">
-          <CheckCircle
-            className="text-green-500 mr-3 mt-0.5 flex-shrink-0"
-            size={18}
-          />
-          <div>
-            <p className="text-green-800">{submitStatus.message}</p>
+        <Alert variant="default" className="mb-6 bg-green-50 border-green-200">
+          <CheckCircle className="h-4 w-4 text-green-500" />
+          <AlertTitle className="text-green-800">Success</AlertTitle>
+          <AlertDescription className="text-green-700">
+            {submitStatus.message}
             {submitStatus.trackingId && (
-              <div className="mt-2">
-                <p className="text-sm text-gray-600 mb-1">
-                  Please save this tracking ID to check your report status in
-                  the future:
+              <div className="mt-3">
+                <p className="text-sm text-muted-foreground mb-1">
+                  Please save this tracking ID:
                 </p>
-                <p className="p-2 bg-white border border-green-100 rounded font-mono text-sm flex justify-between items-center">
-                  <span>{submitStatus.trackingId}</span>
+                <div className="p-2 bg-background border rounded-md font-mono text-sm flex justify-between items-center">
+                  <code className="text-xs sm:text-sm">
+                    {submitStatus.trackingId}
+                  </code>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="text-blue-500 hover:text-blue-700"
+                    className="h-8 text-primary"
                     onClick={() => {
                       navigator.clipboard.writeText(
                         submitStatus.trackingId || ""
                       );
                     }}
                   >
+                    <Copy className="h-3.5 w-3.5 mr-1" />
                     Copy
                   </Button>
-                </p>
+                </div>
               </div>
             )}
-          </div>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Error message */}
       {submitStatus.success === false && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-start">
-          <AlertCircle
-            className="text-red-500 mr-3 mt-0.5 flex-shrink-0"
-            size={18}
-          />
-          <p className="text-red-800">{submitStatus.message}</p>
-        </div>
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{submitStatus.message}</AlertDescription>
+        </Alert>
       )}
 
       {/* Form validation error */}
       {errors.form && (
-        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-md flex items-start">
-          <Info
-            className="text-amber-500 mr-3 mt-0.5 flex-shrink-0"
-            size={18}
-          />
-          <p className="text-amber-800">{errors.form}</p>
-        </div>
+        <Alert variant="default" className="mb-6 bg-amber-50 border-amber-200">
+          <Info className="h-4 w-4 text-amber-500" />
+          <AlertTitle className="text-amber-800">
+            Please check your form
+          </AlertTitle>
+          <AlertDescription className="text-amber-700">
+            {errors.form}
+          </AlertDescription>
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {/* Title field */}
-        <div>
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Report Title <span className="text-red-500">*</span>
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor="title" className="text-sm font-medium">
+            Report Title <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="title"
             value={report.title}
@@ -231,26 +247,21 @@ export const ReportForm = () => {
                 setErrors((prev) => ({ ...prev, title: undefined }));
               }
             }}
-            className={`w-full ${
-              errors.title
-                ? "border-red-500 focus:ring-red-500"
-                : "focus:ring-blue-500"
-            }`}
+            className={
+              errors.title ? "border-destructive ring-destructive" : ""
+            }
             placeholder="Brief title describing the incident"
           />
           {errors.title && (
-            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+            <p className="text-xs text-destructive">{errors.title}</p>
           )}
         </div>
 
         {/* Description field */}
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Description of Incident <span className="text-red-500">*</span>
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor="description" className="text-sm font-medium">
+            Description of Incident <span className="text-destructive">*</span>
+          </Label>
           <Textarea
             id="description"
             value={report.description}
@@ -260,17 +271,15 @@ export const ReportForm = () => {
                 setErrors((prev) => ({ ...prev, description: undefined }));
               }
             }}
-            className={`w-full p-3 border rounded-md min-h-32 ${
-              errors.description
-                ? "border-red-500 focus:ring-red-500"
-                : "focus:ring-blue-500"
+            className={`min-h-32 ${
+              errors.description ? "border-destructive ring-destructive" : ""
             }`}
-            placeholder="Please provide a detailed description of the corruption incident. Include relevant details such as location, date, time, and people involved."
+            placeholder="Please provide a detailed description of the corruption incident..."
           />
           {errors.description && (
-            <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+            <p className="text-xs text-destructive">{errors.description}</p>
           )}
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Your identity will remain confidential throughout this process.
           </p>
         </div>
@@ -289,7 +298,7 @@ export const ReportForm = () => {
           {errors.files && errors.files.length > 0 && (
             <div className="mt-2">
               {errors.files.map((error, index) => (
-                <p key={index} className="text-sm text-red-600">
+                <p key={index} className="text-xs text-destructive">
                   {error}
                 </p>
               ))}
@@ -298,16 +307,12 @@ export const ReportForm = () => {
         </div>
 
         {/* Submit button */}
-        <div className="pt-2">
+        <CardFooter className="px-0 pt-2 pb-0">
           <Button
             type="submit"
-            className={`w-full sm:w-auto px-6 py-2.5 rounded-md font-medium text-white 
-                      transition-colors ${
-                        isSubmitting
-                          ? "bg-blue-400"
-                          : "bg-blue-600 hover:bg-blue-700"
-                      }`}
+            className="w-full sm:w-auto"
             disabled={isSubmitting}
+            size="lg"
           >
             {isSubmitting ? (
               <>
@@ -318,7 +323,7 @@ export const ReportForm = () => {
               "Submit Report"
             )}
           </Button>
-        </div>
+        </CardFooter>
       </form>
     </div>
   );

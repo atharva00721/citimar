@@ -120,3 +120,25 @@ export async function submitReport(
     };
   }
 }
+
+export async function getReportByTrackingId(trackingId: string) {
+  try {
+    const report = await db.report.findUnique({
+      where: {
+        trackingId: trackingId,
+      },
+      include: {
+        evidence: true,
+      },
+    });
+    
+    if (!report) {
+      return { success: false, error: "Report not found" };
+    }
+
+    return { success: true, report };
+  } catch (error) {
+    console.error("Error fetching report:", error);
+    return { success: false, error: "Failed to fetch report" };
+  }
+}
