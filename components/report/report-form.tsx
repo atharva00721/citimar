@@ -17,8 +17,6 @@ import { submitReport } from "@/actions/report";
 import { useRouter } from "next/navigation";
 import { batchCleanFiles } from "@/utils/file-sanitizer";
 import {
-  Card,
-  CardContent,
   CardHeader,
   CardTitle,
   CardDescription,

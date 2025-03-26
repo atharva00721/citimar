@@ -5,18 +5,24 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+interface AuthGuardProps {
+    children: React.ReactNode;
+}
+
+const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     const { data: session, status } = useSession();
     const router = useRouter();
+    console.log("isAdmin",session?.user.isAdmin)
 
     useEffect(() => {
-        if (status === "unauthenticated") {
-            // Redirect to login page if not authenticated
+        if (status === "loading") return;
+
+        if (status === "unauthenticated" || !session?.user?.isAdmin) {
             router.push("/admin/login");
         }
-    }, [status, router]);
-
-    if (status === "loading") return <p>Loading...</p>;
+    }, [status, router, session?.user?.isAdmin]);
 
     return <>{children}</>;
-}
+};
+
+export default AuthGuard;

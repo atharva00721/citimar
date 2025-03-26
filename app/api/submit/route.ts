@@ -60,9 +60,6 @@ export async function POST(request: NextRequest) {
             "X-RateLimit-Remaining": "0",
             "X-RateLimit-Reset": "86400", // 24h in seconds
           },
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': '86400'
-          }
         }
       );
     }
