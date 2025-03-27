@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/api/salt/route.ts
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
@@ -18,9 +19,9 @@ export async function GET() {
         }
       }
     );
-  } catch (error) {
+  } catch (error:any) {
     return new NextResponse(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: error||'Internal server error'}),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
