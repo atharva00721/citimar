@@ -24,6 +24,7 @@ export default async function Page() {
     title: report.title, // Already decrypted by getReports
     status: report.status,
     createdAt: report.createdAt.toString(),
+    category:report.category,
     updatedAt: report.updatedAt?.toString(),
     content: report.content, // Already decrypted by getReports
     evidenceCount: report.evidence.length,

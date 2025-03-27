@@ -12,7 +12,6 @@ interface AuthGuardProps {
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     const { data: session, status } = useSession();
     const router = useRouter();
-    console.log("isAdmin",session?.user.isAdmin)
 
     useEffect(() => {
         if (status === "loading") return;

@@ -32,10 +32,8 @@ import {
   IconGripVertical,
   IconLayoutColumns,
   IconLoader,
-  IconPlus,
   IconClock,
   IconSearch,
-  IconX,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import {
@@ -109,8 +107,9 @@ export const schema = z.object({
   evidenceCount: z.number().optional(),
   category: z.object({
     id: z.string(),
+    description: z.string().nullable(),
     name: z.string(),
-    icon: z.string().optional(),
+    icon: z.string().nullable(),
   }),
 });
 
@@ -354,7 +353,11 @@ DraggableRow.displayName = "DraggableRow";
 
 // Optimized pagination controls
 const PaginationControls = React.memo(
-  ({ table }: { table: ReturnType<typeof useReactTable<z.infer<typeof schema>>> }) => {
+  ({
+    table,
+  }: {
+    table: ReturnType<typeof useReactTable<z.infer<typeof schema>>>;
+  }) => {
     return (
       <div className="flex w-fit items-center gap-2 lg:ml-0">
         <Button
@@ -741,18 +744,143 @@ export function DataTable({
         </div>
       </TabsContent>
       <TabsContent value="pending" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed flex items-center justify-center text-muted-foreground">
-          Pending review reports
+        <div className="overflow-hidden rounded-lg border">
+          <Table>
+            <TableHeader className="bg-muted sticky top-0 z-10">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} colSpan={header.colSpan}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table
+                .getRowModel()
+                .rows.filter((row) => row.original.status === "SUBMITTED")
+                .length ? (
+                table
+                  .getRowModel()
+                  .rows.filter((row) => row.original.status === "SUBMITTED")
+                  .map((row) => (
+                    <DraggableRow key={row.id} row={row} />
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No pending reports found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </TabsContent>
       <TabsContent value="investigation" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed flex items-center justify-center text-muted-foreground">
-          Reports under investigation
+        <div className="overflow-hidden rounded-lg border">
+          <Table>
+            <TableHeader className="bg-muted sticky top-0 z-10">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} colSpan={header.colSpan}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table
+                .getRowModel()
+                .rows.filter(
+                  (row) =>
+                    row.original.status === "IN_PROGRESS" ||
+                    row.original.status === "UNDER_REVIEW"
+                )
+                .length ? (
+                table
+                  .getRowModel()
+                  .rows.filter(
+                    (row) =>
+                      row.original.status === "IN_PROGRESS" ||
+                      row.original.status === "UNDER_REVIEW"
+                  )
+                  .map((row) => (
+                    <DraggableRow key={row.id} row={row} />
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No reports under investigation found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </TabsContent>
       <TabsContent value="resolved" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed flex items-center justify-center text-muted-foreground">
-          Resolved reports
+        <div className="overflow-hidden rounded-lg border">
+          <Table>
+            <TableHeader className="bg-muted sticky top-0 z-10">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} colSpan={header.colSpan}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table
+                .getRowModel()
+                .rows.filter((row) => row.original.status === "RESOLVED")
+                .length ? (
+                table
+                  .getRowModel()
+                  .rows.filter((row) => row.original.status === "RESOLVED")
+                  .map((row) => (
+                    <DraggableRow key={row.id} row={row} />
+                  ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No resolved reports found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </TabsContent>
     </Tabs>

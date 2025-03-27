@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { toast } from "sonner";
 
 // Define Category type for dropdown
 type Category = {
@@ -43,6 +44,7 @@ type FormErrors = {
 };
 
 export const ReportForm = () => {
+  
   const router = useRouter();
   const [report, setReport] = useState<ReportFormData>({
     title: "",
@@ -160,7 +162,7 @@ export const ReportForm = () => {
             "Your report has been submitted successfully. Redirecting to tracking page...",
           trackingId: result.trackingId,
         });
-
+        toast.success(`report created successfully with tracking id ${result.trackingId}`)
         // Reset form
         setReport({
           title: "",

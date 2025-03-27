@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -100,7 +101,7 @@ export async function submitReport(
     const encryptedTitle = encrypt(title);
 
     // Store report in database with encrypted content
-    const report = await db.report.create({
+     await db.report.create({
       data: {
         trackingId,
         title: encryptedTitle,
@@ -311,3 +312,4 @@ export async function getReports(filter?: any) {
     return { success: false, error: "Failed to fetch reports" };
   }
 }
+

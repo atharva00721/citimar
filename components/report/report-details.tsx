@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import {
   IconArrowLeft,
   IconCircleCheckFilled,
@@ -25,6 +24,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Report } from "@/types/report"; // Make sure you have this type defined
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 export function ReportDetails({ report }: { report: Report }) {
   const formatDate = (date: Date) => {
@@ -36,6 +38,12 @@ export function ReportDetails({ report }: { report: Report }) {
       minute: "2-digit",
     });
   };
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(report.trackingId)
+      .then(() => toast.success("Copied to clipboard!")) // Optional success feedback
+      .catch(err => toast.error("Failed to copy:", err));
+    }
+    const { data: session } = useSession();
 
   const getStatusDetails = () => {
     switch (report.status) {
@@ -103,8 +111,9 @@ export function ReportDetails({ report }: { report: Report }) {
             <h1 className="text-3xl font-bold tracking-tight mb-1">
               {report.title}
             </h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-md flex gap-4 mt-6">
               Report ID: {report.trackingId}
+              <Copy className="w-5 cursor-pointer " onClick={copyToClipboard}/>
             </p>
           </div>
           <Badge
@@ -239,11 +248,12 @@ export function ReportDetails({ report }: { report: Report }) {
                 href={`/report/${report.trackingId}/update`}
                 className="w-full sm:w-auto"
               >
+              {session?.user.isAdmin===true && 
                 <Button variant="outline" className="w-full sm:w-auto">
                   Update Status
-                </Button>
+                </Button>}
               </Link>
-              <Button className="w-full sm:w-auto">Download Report</Button>
+              <Button className=" sm:w-auto">Download Report</Button>
             </div>
           </CardFooter>
         </Card>
