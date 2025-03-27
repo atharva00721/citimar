@@ -135,7 +135,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect }) => {
         </div>
 
         {/* Privacy notice */}
-        <div className="mb-3 flex items-start text-xs text-muted-foreground bg-blue-50/50 p-2 rounded-md">
+        <div className="mb-3 flex items-start text-xs text-muted-foreground bg-white/30 my-4 p-2 rounded-md">
           <Shield className="h-3.5 w-3.5 mr-2 mt-0.5 flex-shrink-0 text-blue-500" />
           <p>
             For your privacy, personal metadata will be automatically removed

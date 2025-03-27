@@ -204,7 +204,7 @@ export const ReportForm = () => {
     <div className="max-w-2xl mx-auto">
       <CardHeader className="px-0 pt-0">
         <CardTitle className="text-xl">Submit Corruption Report</CardTitle>
-        <CardDescription>
+        <CardDescription className="my-5">
           Provide details about your report. All submissions are confidential.
         </CardDescription>
       </CardHeader>
@@ -309,9 +309,9 @@ export const ReportForm = () => {
             }}
           >
             <SelectTrigger
-              className={
-                errors.categoryId ? "border-destructive ring-destructive" : ""
-              }
+              className={` w-full
+                ${errors.categoryId ? "border-destructive ring-destructive" : ""}
+              `}
             >
               <SelectValue placeholder="Select category" />
             </SelectTrigger>

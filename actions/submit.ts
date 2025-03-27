@@ -16,6 +16,17 @@ const COOKIE_NAME = "submission_count";
 const COOKIE_MAX_AGE = 24 * 60 * 60; // 24 hours in seconds
 let globalRequestCount = 0;
 
+// Store the current target range
+let currentTargetRange = 0;
+
+/**
+ * Get a new random target range for human verification
+ */
+export async function getTargetRange() {
+  currentTargetRange = Math.floor(Math.random() * 101); // Random number between 0 and 100
+  return currentTargetRange;
+}
+
 /**
  * Validate the Proof-of-Work by hashing the challenge and nonce.
  */
@@ -25,10 +36,13 @@ function validatePoW(challenge: string, nonce: number, difficulty: number): bool
 }
 
 /**
- * Validate the human verification slider (between 70% and 80%).
+ * Validate the human verification slider against the current target range
  */
 function validateHumanCheck(sliderValue: number): boolean {
-  return sliderValue >= 700 && sliderValue <= 800;
+  // Allow a small margin of error (±5)
+  const marginOfError = 5;
+  // sliderValue is already in 0-100 range from client
+  return Math.abs(sliderValue - currentTargetRange) <= marginOfError;
 }
 
 /**

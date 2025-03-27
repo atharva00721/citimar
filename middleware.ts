@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const RATE_LIMIT = 3; // Max submissions per 24 hours
 const COOKIE_NAME = 'submission_count';
-const COOKIE_MAX_AGE = 24 * 60 * 60; // 24 hours in seconds
 
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname !== '/api/submit') {
