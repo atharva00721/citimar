@@ -1,26 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-'use client'
-import { submitReportAction, getTargetRange } from '@/actions/submit';
-import { ReportForm } from '@/components/report/report-form';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+"use client";
+import { submitReportAction, getTargetRange } from "@/actions/submit";
+import { ReportForm } from "@/components/report/report-form";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import { Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 // Server actions
 const getSalt = async (): Promise<{ salt: string }> => {
-  const res = await fetch('/api/salt');
+  const res = await fetch("/api/salt");
   return res.json();
 };
-
 
 export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<string>("");
   const [salt, setSalt] = useState<string>("");
-  const [difficulty, ] = useState<number>(2);
+  const [difficulty] = useState<number>(2);
   const [sliderPos, setSliderPos] = useState<number>(0);
   const [verified, setVerified] = useState<boolean>(false);
   const [targetRange, setTargetRange] = useState<number>(0);
@@ -37,9 +36,9 @@ export default function Home() {
         // Get initial target range
         const target = await getTargetRange();
         setTargetRange(target);
-      } catch (err:any) {
+      } catch (err: any) {
         setStatus("Error initializing security parameters");
-        console.log(err)
+        console.log(err);
       }
     };
 
@@ -138,7 +137,8 @@ export default function Home() {
                     className="my-6"
                   />
                   <p className="text-sm text-muted-foreground text-center">
-                    Drag the slider to {targetRange}% to verify you&apos;re human
+                    Drag the slider to {targetRange}% to verify you&apos;re
+                    human
                   </p>
                   {validateHumanCheck() && (
                     <p className="text-xs text-green-600 text-center">

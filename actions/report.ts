@@ -101,7 +101,7 @@ export async function submitReport(
     const encryptedTitle = encrypt(title);
 
     // Store report in database with encrypted content
-     await db.report.create({
+    await db.report.create({
       data: {
         trackingId,
         title: encryptedTitle,
@@ -130,33 +130,44 @@ export async function submitReport(
   }
 }
 
-export async function getReportByTrackingId(trackingId: string) {
+import { Report } from "@/types/report";
+
+export async function getReportByTrackingId(trackingId: string): Promise<{
+  success: boolean;
+  report?: Report;
+}> {
   try {
     const report = await db.report.findUnique({
-      where: {
-        trackingId: trackingId,
-      },
-      include: {
-        evidence: true,
-        category: true, // Include the category information
-      },
+      where: { trackingId },
+      include: { evidence: true, category: true },
     });
 
     if (!report) {
-      return { success: false, error: "Report not found" };
+      return { success: false };
     }
 
-    // Decrypt the report content and title before sending to client
-    const decryptedReport = {
-      ...report,
-      title: decrypt(report.title) as string,
-      content: decrypt(report.content) as string,
-    };
+    // Use secret key from env or default value
+    const secretKey = process.env.DEFAULT_SECRET_KEY || "defaultSecretKey";
 
-    return { success: true, report: decryptedReport };
-  } catch (error) {
-    console.error("Error fetching report:", error);
-    return { success: false, error: "Failed to fetch report" };
+    // Decrypt the fields if possible
+    let { title, content } = report;
+    try {
+      title =
+        typeof decrypt(title, secretKey) === "string"
+          ? (decrypt(title, secretKey) as string)
+          : title;
+      content =
+        typeof decrypt(content, secretKey) === "string"
+          ? (decrypt(content, secretKey) as string)
+          : content;
+    } catch (e) {
+      console.error("Decryption error in getReportByTrackingId:", e);
+    }
+
+    return { success: true, report: { ...report, title, content } as Report };
+  } catch (e) {
+    console.error(e);
+    return { success: false };
   }
 }
 
@@ -312,4 +323,3 @@ export async function getReports(filter?: any) {
     return { success: false, error: "Failed to fetch reports" };
   }
 }
-

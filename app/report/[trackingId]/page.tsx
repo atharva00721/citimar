@@ -2,13 +2,11 @@ import { notFound } from "next/navigation";
 import { getReportByTrackingId } from "@/actions/report";
 import { ReportDetails } from "@/components/report/report-details";
 
-// This is now a server component (async is allowed)
 export default async function ReportPage({
   params,
 }: {
   params: { trackingId: string };
 }) {
-  // Remove the await - params.trackingId is already a string, not a Promise
   const trackingId = params.trackingId;
   const { success, report } = await getReportByTrackingId(trackingId);
 

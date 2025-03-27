@@ -39,11 +39,12 @@ export function ReportDetails({ report }: { report: Report }) {
     });
   };
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(report.trackingId)
+    navigator.clipboard
+      .writeText(report.trackingId)
       .then(() => toast.success("Copied to clipboard!")) // Optional success feedback
-      .catch(err => toast.error("Failed to copy:", err));
-    }
-    const { data: session } = useSession();
+      .catch((err) => toast.error("Failed to copy:", err));
+  };
+  const { data: session } = useSession();
 
   const getStatusDetails = () => {
     switch (report.status) {
@@ -99,11 +100,11 @@ export function ReportDetails({ report }: { report: Report }) {
     <div className="container py-8 max-w-3xl mx-auto px-4">
       <div className="mb-8">
         <Link
-          href="/admin/dashboard"
+          href={session?.user ? "/admin/dashboard" : "/explore"}
           className="inline-flex items-center text-sm font-medium text-muted-foreground mb-6 hover:text-primary transition-colors"
         >
           <IconArrowLeft className="mr-2 size-4" />
-          Back to Dashboard
+          {session?.user ? "Back to Dashboard" : "Back to Explore"}
         </Link>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
@@ -113,7 +114,7 @@ export function ReportDetails({ report }: { report: Report }) {
             </h1>
             <p className="text-muted-foreground text-md flex gap-4 mt-6">
               Report ID: {report.trackingId}
-              <Copy className="w-5 cursor-pointer " onClick={copyToClipboard}/>
+              <Copy className="w-5 cursor-pointer " onClick={copyToClipboard} />
             </p>
           </div>
           <Badge
@@ -248,12 +249,13 @@ export function ReportDetails({ report }: { report: Report }) {
                 href={`/report/${report.trackingId}/update`}
                 className="w-full sm:w-auto"
               >
-              {session?.user.isAdmin===true && 
-                <Button variant="outline" className="w-full sm:w-auto">
-                  Update Status
-                </Button>}
+                {session?.user.isAdmin === true && (
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Update Status
+                  </Button>
+                )}
               </Link>
-              <Button className=" sm:w-auto">Download Report</Button>
+              {/* <Button className=" sm:w-auto">Download Report</Button> */}
             </div>
           </CardFooter>
         </Card>
