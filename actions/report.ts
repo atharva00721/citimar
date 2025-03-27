@@ -323,3 +323,50 @@ export async function getReports(filter?: any) {
     return { success: false, error: "Failed to fetch reports" };
   }
 }
+
+export async function getReportEvidence(trackingId: string) {
+  try {
+    const evidence = await db.evidence.findMany({
+      where: {
+        report: {
+          trackingId: trackingId
+        }
+      },
+      include: {
+        report: {
+          select: {
+            trackingId: true,
+            title: true
+          }
+        }
+      }
+    });
+
+    if (!evidence || evidence.length === 0) {
+      return { 
+        success: false, 
+        error: "No evidence found for this report" 
+      };
+    }
+
+    // Decrypt the report title if it exists
+    const decryptedEvidence = evidence.map(item => ({
+      ...item,
+      report: {
+        ...item.report,
+        title: decrypt(item.report.title) as string
+      }
+    }));
+
+    return {
+      success: true,
+      evidence: decryptedEvidence
+    };
+  } catch (error) {
+    console.error("Error fetching report evidence:", error);
+    return {
+      success: false,
+      error: "Failed to fetch evidence"
+    };
+  }
+}

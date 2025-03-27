@@ -14,7 +14,7 @@ export type SubmitRequest = {
 };
 
 const COOKIE_MAX_AGE = 24 * 60 * 60; // 24 hours in seconds
-const MAX_SUBMISSIONS_PER_USER=5
+const MAX_SUBMISSIONS_PER_USER=3
 let globalRequestCount = 0;
 
 // Store the current target range

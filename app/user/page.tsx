@@ -6,19 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
-
-// Server actions
-const getSalt = async (): Promise<{ salt: string }> => {
-  const res = await fetch("/api/salt");
-  return res.json();
-};
+  
 
 export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   const [status, setStatus] = useState<string>("");
-  const [salt, setSalt] = useState<string>("");
   const [difficulty] = useState<number>(2);
   const [sliderPos, setSliderPos] = useState<number>(0);
   const [verified, setVerified] = useState<boolean>(false);
@@ -31,9 +26,7 @@ export default function Home() {
 
     const fetchSalt = async () => {
       try {
-        const data = await getSalt();
-        setSalt(data.salt);
-        // Get initial target range
+    
         const target = await getTargetRange();
         setTargetRange(target);
       } catch (err: any) {
@@ -53,7 +46,7 @@ export default function Home() {
       }
 
       const anonId: string = localStorage.getItem("anon_id") || "";
-      const clientHash: string = await hashData(salt + anonId);
+      const clientHash: string = await hashData(anonId);
 
       const challenge: string = Date.now().toString();
       const { nonce } = await generateProofOfWork(challenge, difficulty);
@@ -116,9 +109,11 @@ export default function Home() {
   };
 
   return (
+   <div className="relative">
+   <Image width={2000} height={2000} src="/g3.png" className="w-full h-full absolute top-0 right-0" alt="gradient"/>
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 gap-6">
       {!verified ? (
-        <Card className="w-full max-w-md shadow-sm">
+        <Card className="w-full max-w-md shadow-sm z-50">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-medium text-center">
               Human Verification
@@ -178,7 +173,7 @@ export default function Home() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="w-full max-w-3xl shadow-sm">
+        <Card className="w-full max-w-3xl shadow-sm z-50">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-medium text-center">
               Secure Whistleblower Submission
@@ -190,5 +185,6 @@ export default function Home() {
         </Card>
       )}
     </div>
+   </div>
   );
 }

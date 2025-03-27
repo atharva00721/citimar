@@ -49,7 +49,7 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-8">
             <a href="#features" className="text-white/90 hover:text-white transition-colors">Features</a>
             <a href="#how-it-works" className="text-white/90 hover:text-white transition-colors">How It Works</a>
-            <a href="#trust" className="text-white/90 hover:text-white transition-colors">Trust & Security</a>
+            <Link href="/explore" className="text-white/90 hover:text-white transition-colors">search </Link>
             <div className="flex items-center space-x-3">
               <Link href="/user" className="px-4 py-2 text-white/90 hover:text-white transition-colors">report now</Link>
               <Link href="/admin/login" className="px-4 py-2 bg-red-900/70 hover:bg-red-800 text-white rounded-lg transition-all">Admin Login</Link>
