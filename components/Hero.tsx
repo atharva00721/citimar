@@ -24,7 +24,7 @@ const Hero = () => {
         </h1>
         
         <p className="subheading text-white/80 max-w-2xl mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          Our secure platform empowers whistleblowers to safely report misconduct while maintaining complete anonymity. Join the movement for transparency and accountability.
+          Our secure platform empowers whistleblowers to safely report misconduct while maintaining complete anonymity.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 mb-16 animate-fade-in" style={{ animationDelay: '0.3s' }}>
@@ -36,8 +36,8 @@ const Hero = () => {
         
         <div className="w-full max-w-4xl relative h-96 animate-fade-in-delay">
           {/* Mock interface */}
-          <div className="absolute inset-0 rounded-2xl overflow-hidden glass-panel bg-black/30 border-gray-800">
-            <div className="h-12 bg-gray-900 flex items-center px-4">
+          <div className="absolute inset-0 rounded-2xl overflow-hidden glass-panel bg-black border-gray-800">
+            <div className="h-12 bg-black flex items-center px-4">
               <div className="flex space-x-2">
                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
                 <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
@@ -48,9 +48,9 @@ const Hero = () => {
                 <span className="text-xs text-white/80">secure-aegis.com</span>
               </div>
             </div>
-            <div className="p-8 flex flex-col h-[calc(100%-3rem)] bg-gray-900">
+            <div className="p-8 flex flex-col h-[calc(100%-3rem)] bg-black">
               <h3 className="text-lg text-white font-medium mb-4">New Anonymous Report</h3>
-              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+              <div className="bg-black  rounded-lg p-4 mb-4">
                 <div className="h-4 bg-gray-700 rounded w-3/4 mb-3"></div>
                 <div className="h-4 bg-gray-700 rounded w-1/2"></div>
               </div>
