@@ -20,7 +20,6 @@ model Report {
   title      String
   content    String
   status     ReportStatus
-  // Rename the previous category field to categoryId to reference the Category model
   categoryId String
   category   Category  @relation(fields: [categoryId], references: [id])
   createdAt  DateTime  @default(now())
@@ -35,6 +34,12 @@ model Evidence {
   fileType  String
   encrypted Boolean @default(true)
   report    Report  @relation(fields: [reportId], references: [id])
+}
+model RateLimit {
+  id              String   @id @default(cuid())
+  key             String   @unique  // Combined key: IP + client hash
+  submissionCount Int      @default(0)
+  lastSubmission  DateTime @default(now())
 }
 
 enum ReportStatus {

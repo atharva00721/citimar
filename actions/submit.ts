@@ -1,8 +1,9 @@
 // app/actions/submitReportAction.ts
 "use server";
 
-import { cookies } from "next/headers";
+import {  headers } from "next/headers";
 import crypto from "crypto";
+import { PrismaClient } from "@prisma/client";
 
 export type SubmitRequest = {
   clientHash: string;
@@ -12,13 +13,13 @@ export type SubmitRequest = {
   sliderValue: number;
 };
 
-const COOKIE_NAME = "submission_count";
 const COOKIE_MAX_AGE = 24 * 60 * 60; // 24 hours in seconds
+const MAX_SUBMISSIONS_PER_USER=5
 let globalRequestCount = 0;
 
 // Store the current target range
 let currentTargetRange = 0;
-
+const prisma = new PrismaClient()
 /**
  * Get a new random target range for human verification
  */
@@ -45,6 +46,11 @@ function validateHumanCheck(sliderValue: number): boolean {
   return Math.abs(sliderValue - currentTargetRange) <= marginOfError;
 }
 
+function generateCombinedKey(ip: string, clientHash: string): string {
+  return crypto.createHash("sha256").update(ip + clientHash).digest("hex");
+}
+
+
 /**
  * Server action to handle report submission.
  * Reads and updates the cookie for rate limiting.
@@ -54,14 +60,45 @@ function validateHumanCheck(sliderValue: number): boolean {
  */
 export async function submitReportAction(body: SubmitRequest) {
   try {
-    // Get the cookie store from Next.js headers API.
-    const cookieStore = await cookies();
+    const { clientHash } = body;  
+    const headersList = await headers();
 
-    // Read the current submission count (default to 0 if not set).
-    const submissionCount = parseInt(cookieStore.get(COOKIE_NAME)?.value || "0", 10);
+    // Get IP address from headers
+    const ip = headersList.get("x-forwarded-for") || 
+               headersList.get("x-real-ip") || 
+               "unknown";
 
-    // If limit is reached, return an error response.
-    if (submissionCount >= 3) {
+    // Generate rate limit key from IP and client hash
+    const combinedKey = generateCombinedKey(ip, clientHash);
+
+    let rateLimitRecord = await prisma.rateLimit.findUnique({
+      where: { key: combinedKey },
+    });
+    const currentTime = new Date();
+
+    if (!rateLimitRecord) {
+      rateLimitRecord = await prisma.rateLimit.create({
+        data: {
+          key: combinedKey,
+          submissionCount: 0,
+          lastSubmission: currentTime,
+        },
+      });
+    } else {
+      // If more than 24 hours have passed since the last submission, reset the count.
+      const timeDifference = currentTime.getTime() - new Date(rateLimitRecord.lastSubmission).getTime();
+      if (timeDifference > COOKIE_MAX_AGE * 1000) {
+        rateLimitRecord = await prisma.rateLimit.update({
+          where: { id: rateLimitRecord.id },
+          data: {
+            submissionCount: 0,
+            lastSubmission: currentTime,
+          },
+        });
+      }
+    }
+
+    if (rateLimitRecord.submissionCount >= MAX_SUBMISSIONS_PER_USER) {
       return {
         error: "Too many submissions (max 3 per day)",
         status: 429,
@@ -84,19 +121,21 @@ export async function submitReportAction(body: SubmitRequest) {
     if (globalRequestCount > 100) newDifficulty = 4;
     else if (globalRequestCount > 50) newDifficulty = 3;
 
-    // Increment submission count.
-    const newCount = submissionCount + 1;
-    (await cookies()).set(COOKIE_NAME, newCount.toString(), {
-      path: "/",
-      httpOnly: true,
-      maxAge: COOKIE_MAX_AGE,
-    });
-
-    return {
-      success: true,
-      remainingSubmissions: 3 - newCount,
-      newDifficulty,
-    };
+      // Increment the submission count and update lastSubmission
+      const newSubmissionCount = rateLimitRecord.submissionCount + 1;
+      await prisma.rateLimit.update({
+        where: { id: rateLimitRecord.id },
+        data: {
+          submissionCount: newSubmissionCount,
+          lastSubmission: currentTime,
+        },
+      });
+  
+      return {
+        success: true,
+        remainingSubmissions: MAX_SUBMISSIONS_PER_USER - newSubmissionCount,
+        newDifficulty,
+      };
   } catch (err: unknown) {
     const error = err instanceof Error ? err.message : "Unknown error";
     console.error("Submission error:", error);
