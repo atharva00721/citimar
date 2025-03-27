@@ -59,3 +59,43 @@ export function processReportsForAnalysis(reports: Report[]) {
     recentTrends,
   };
 }
+
+export function processReportData(reports) {
+  // Initialize distributions and groups
+  const categoryDistribution = {};
+  const statusDistribution = {};
+  const timelineData = {};
+  const statusByCategory = {};
+
+  // Process each report
+  reports.forEach((report) => {
+    // Category Distribution & Status by Category
+    const categoryName = report.category?.name || "Uncategorized";
+    categoryDistribution[categoryName] =
+      (categoryDistribution[categoryName] || 0) + 1;
+    if (!statusByCategory[categoryName]) statusByCategory[categoryName] = [];
+    statusByCategory[categoryName].push(report);
+
+    // Status Distribution
+    statusDistribution[report.status] =
+      (statusDistribution[report.status] || 0) + 1;
+
+    // Timeline Data (group by YYYY-MM-DD)
+    const date = new Date(report.createdAt).toISOString().slice(0, 10);
+    timelineData[date] = (timelineData[date] || 0) + 1;
+  });
+
+  // Assume recentReports are the last 5 based on createdAt
+  const sortedReports = [...reports].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
+  const recentReports = sortedReports.slice(0, 5);
+
+  return {
+    categoryDistribution,
+    statusDistribution,
+    timelineData,
+    recentReports,
+    statusByCategory,
+  };
+}

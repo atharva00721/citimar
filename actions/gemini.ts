@@ -32,24 +32,26 @@ export async function generateReportInsights(
 
     // Structure the prompt for better results
     const prompt = `
-      Analyze the following report data and provide insights:
-      ${JSON.stringify(analyticData, null, 2)}
-      
-      Please provide:
-      1. Three key insights based on the data
-      2. Two recommendations for improving report handling
-      3. Any anomalies or unusual patterns in the data
-      
-      Format your response as JSON with the following structure:
-      {
-        "insights": ["insight 1", "insight 2", "insight 3"],
-        "recommendations": ["recommendation 1", "recommendation 2"],
-        "anomalies": ["anomaly 1", "anomaly 2"]
-      }
-    `;
+  You are an expert data analyst for a secure and anonymous whistleblowing platform, specializing in extracting actionable insights to optimize report handling, identify inefficiencies, and spot anomalies. 
+
+  Analyze the provided report data in detail:
+  ${JSON.stringify(analyticData, null, 2)}
+
+  Your analysis must directly provide:
+  1. **Key Insights**: Focus on trends, bottlenecks, frequent categories, or patterns observed in the reports that reveal areas for improvement in handling or user submissions.
+  2. **Actionable Recommendations**: Suggest specific measures to enhance report handling efficiency, improve submission quality, or strengthen platform operations while maintaining user anonymity.
+  3. **Notable Anomalies**: Highlight any outliers, unusual patterns, suspicious entries, or system-related irregularities that require immediate attention to ensure data integrity.
+
+  Respond only in the precise JSON structure below (no additional text):
+  {
+    "insights": ["insight 1", "insight 2", "insight 3"],
+    "recommendations": ["recommendation 1", "recommendation 2"],
+    "anomalies": ["anomaly 1", "anomaly 2"]
+  }
+`;
 
     // Create a generative model
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const result = await model.generateContent(prompt);
     const response = result.response;
     const text = response.text();

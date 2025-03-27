@@ -43,12 +43,12 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/admin/dashboard",
       icon: IconDashboard,
     },
     {
       title: "Analytics",
-      url: "#",
+      url: "/admin/analysis",
       icon: IconChartBar,
     },
   ],
@@ -130,7 +130,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                {/* <IconInnerShadowTop className="!size-5" /> */}
                 <Cat className="!size-5" />
                 <span className="text-base font-semibold">Aegis</span>
               </a>
@@ -142,7 +141,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
-      <SidebarFooter>{/* <NavUser user={data.user} /> */}</SidebarFooter>
     </Sidebar>
   );
 }
