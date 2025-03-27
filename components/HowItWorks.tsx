@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Shield, FileText, MessageCircle } from 'lucide-react';
+import Link from 'next/link';
 
 const HowItWorks = () => {
   const steps = [
@@ -75,9 +76,9 @@ const HowItWorks = () => {
         </div>
         
         <div className="mt-16 text-center">
-          <a href="#" className="btn-primary inline-flex items-center bg-red-700 hover:bg-red-600">
+          <Link href="/user" className="btn-primary inline-flex items-center bg-red-700 hover:bg-red-600">
             Start Secure Reporting Now
-          </a>
+          </Link>
         </div>
       </div>
     </section>

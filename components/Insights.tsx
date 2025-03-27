@@ -1,109 +1,178 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-generateReportInsights;
 
-import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Lightbulb, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
-import { Report } from "@/types/report";
-import { generateReportInsights } from "@/actions/gemini";
+import { useState } from 'react';
+import { Report } from '@/types/report';
+import { generateReportInsights } from '@/actions/gemini';
+import { IconLoader2 } from '@tabler/icons-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function AIInsights({ reports }: { reports: Report[] }) {
-  const [loading, setLoading] = useState(false);
-  const [insights, setInsights] = useState<string[]>([]);
-  const [recommendations, setRecommendations] = useState<string[]>([]);
-  const [anomalies, setAnomalies] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  async function generateInsights() {
-    setLoading(true);
-    setError(null);
-
+  const generateAnalysis = async () => {
+    setIsAnalyzing(true);
     try {
       const result = await generateReportInsights(reports);
-
       if (result.success) {
-        setInsights(result.insights || []);
-        setRecommendations(result.recommendations || []);
-        setAnomalies(result.anomalies || []);
+        setAnalysis(result);
+        toast.success("Analysis generated successfully");
       } else {
-        setError(result.error || "Failed to generate insights");
+        toast.error(result.error || "Failed to generate analysis");
       }
-    } catch (err) {
-      setError("An unexpected error occurred");
-      console.error(err);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to generate analysis");
     } finally {
-      setLoading(false);
+      setIsAnalyzing(false);
     }
-  }
+  };
 
   return (
-    <Card className="mt-6">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Lightbulb className="h-5 w-5" />
-          AI-Powered Insights
-        </CardTitle>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={generateInsights}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Generate Insights
-            </>
-          )}
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {error ? (
-          <div className="flex items-center gap-2 text-red-500">
-            <AlertTriangle className="h-4 w-4" />
-            {error}
+    <Card className="shadow-lg hover:shadow-xl transition-shadow rounded-lg bg-card">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-xl">AI Analysis Dashboard</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              Comprehensive AI-powered analysis of {reports.length} reports
+            </CardDescription>
           </div>
-        ) : insights.length > 0 ? (
-          <div className="space-y-6">
-            <div>
-              <h3 className="font-medium mb-2">Key Insights:</h3>
-              <ul className="list-disc pl-5 space-y-1">
-                {insights.map((insight, i) => (
-                  <li key={i}>{insight}</li>
-                ))}
-              </ul>
-            </div>
+          <Button 
+            onClick={generateAnalysis} 
+            disabled={isAnalyzing}
+            variant="default"
+          >
+            {isAnalyzing ? (
+              <>
+                <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              'Generate Analysis'
+            )}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-6">
+        {isAnalyzing ? (
+          <div className="space-y-4 animate-pulse">
+            <div className="h-4 bg-muted rounded w-3/4"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
+            <div className="h-4 bg-muted rounded w-2/3"></div>
+          </div>
+        ) : analysis ? (
+          <Tabs defaultValue="overview" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="trends">Trends</TabsTrigger>
+              <TabsTrigger value="risks">Risk Assessment</TabsTrigger>
+              <TabsTrigger value="actions">Actions</TabsTrigger>
+            </TabsList>
 
-            <div>
-              <h3 className="font-medium mb-2">Recommendations:</h3>
-              <ul className="list-disc pl-5 space-y-1">
-                {recommendations.map((rec, i) => (
-                  <li key={i}>{rec}</li>
-                ))}
-              </ul>
-            </div>
+            <TabsContent value="overview" className="space-y-4">
+              {analysis.riskAssessment?.overallRisk && (
+                <div className="flex items-center gap-2 mb-4">
+                  <Badge 
+                    variant="secondary"
+                    className={`
+                      ${analysis.riskAssessment.overallRisk === 'HIGH' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500' : ''}
+                      ${analysis.riskAssessment.overallRisk === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500' : ''}
+                      ${analysis.riskAssessment.overallRisk === 'LOW' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500' : ''}
+                    `}
+                  >
+                    {analysis.riskAssessment.overallRisk} OVERALL RISK
+                  </Badge>
+                </div>
+              )}
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm text-foreground">Key Insights</h3>
+                  <ul className="space-y-1">
+                    {analysis.insights?.map((insight, index) => (
+                      <li key={index} className="text-sm text-muted-foreground flex gap-2">
+                        <span className="text-foreground">•</span>
+                        <span>{insight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-            {anomalies.length > 0 && (
-              <div>
-                <h3 className="font-medium mb-2">Potential Anomalies:</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  {anomalies.map((anomaly, i) => (
-                    <li key={i}>{anomaly}</li>
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm text-foreground">Notable Anomalies</h3>
+                  <ul className="space-y-1">
+                    {analysis.anomalies?.map((anomaly, index) => (
+                      <li key={index} className="text-sm text-muted-foreground flex gap-2">
+                        <span className="text-foreground">•</span>
+                        <span>{anomaly}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="trends" className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-3">
+                {['categoryTrends', 'timeTrends', 'statusTrends'].map((trendType) => (
+                  <div key={trendType} className="space-y-2">
+                    <h3 className="font-semibold text-sm text-foreground capitalize">
+                      {trendType.replace('Trends', '')} Trends
+                    </h3>
+                    <ul className="space-y-1">
+                      {analysis.trends?.[trendType]?.map((trend, index) => (
+                        <li key={index} className="text-sm text-muted-foreground flex gap-2">
+                          <span className="text-foreground">•</span>
+                          <span>{trend}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="risks" className="space-y-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm text-foreground">Risk Factors</h3>
+                  <ul className="space-y-1">
+                    {analysis.riskAssessment?.riskFactors?.map((factor, index) => (
+                      <li key={index} className="text-sm text-muted-foreground flex gap-2">
+                        <span className="text-foreground">•</span>
+                        <span>{factor}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="actions" className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="font-semibold text-sm text-foreground">Recommended Actions</h3>
+                <ul className="space-y-1">
+                  {analysis.recommendations?.map((recommendation, index) => (
+                    <li key={index} className="text-sm text-muted-foreground flex gap-2">
+                      <span className="text-foreground">•</span>
+                      <span>{recommendation}</span>
+                    </li>
                   ))}
                 </ul>
               </div>
-            )}
-          </div>
+            </TabsContent>
+          </Tabs>
         ) : (
-          <div className="text-center py-10 text-muted-foreground">
-            Click "Generate Insights" to get AI-powered analysis of your report
-            data
+          <div className="text-center py-8 text-muted-foreground">
+            <p className="text-sm">
+              Click "Generate Analysis" to get comprehensive AI-powered insights
+            </p>
           </div>
         )}
       </CardContent>

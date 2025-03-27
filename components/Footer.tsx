@@ -57,12 +57,6 @@ const Footer = () => {
             <p className="text-gray-400 mb-4">
               Have questions about our platform?
             </p>
-            <a 
-              href="mailto:info@aegis.com" 
-              className="inline-block px-5 py-2.5 bg-gray-900 hover:bg-gray-800 rounded-lg text-white transition-colors mb-4 border border-gray-800"
-            >
-              Contact Support
-            </a>
             <p className="text-xs text-gray-500">
               For security reasons, we do not offer phone support.
             </p>

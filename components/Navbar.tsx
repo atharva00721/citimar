@@ -1,7 +1,8 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ShieldCheck } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -28,15 +29,19 @@ const Navbar = () => {
         isScrolled ? 'py-3 bg-black/80 backdrop-blur-lg shadow-md' : 'py-5 bg-transparent'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 max-h-16 overflow-hidden">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 rounded-lg bg-red-600 flex items-center justify-center">
-                <ShieldCheck className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white">Aegis</span>
+          <div className="flex items-center h-16">
+            <Link href="/" className="flex items-center space-x-2 h-full">
+              <Image 
+                src='/logo.png' 
+                alt='logo' 
+                width={110} 
+                height={40} 
+                className='invert w-full h-full object-contain'
+                priority
+              />
             </Link>
           </div>
 

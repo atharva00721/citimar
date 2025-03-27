@@ -39,13 +39,13 @@ export default function SearchReports({ reports }: SearchReportsProps) {
 
   return (
     <>
-      <div className="mb-6">
+      <div className="mb-6 flex flex-col  items-center">
         <input
           type="text"
           placeholder="Search by Tracking ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full border border-gray-200 rounded-md p-2 focus:outline-none focus:ring focus:border-blue-300"
+          className=" border-none rounded-3xl px-3 bg-white/20 w-md p-2 focus:outline-none focus:ring focus:border-blue-300"
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -68,8 +68,8 @@ export default function SearchReports({ reports }: SearchReportsProps) {
 
           return (
             <Link href={`/report/${report.trackingId}`} key={report.id}>
-              <Card className="h-full hover:bg-gray-50 transition-colors border">
-                <CardContent className="p-5">
+              <Card className="h-full transition-colors border">
+                <CardContent className="p-5 flex flex-col gap-8">
                   {/* Status and tracking ID row */}
                   <div className="flex items-center justify-between mb-3">
                     <Badge
@@ -91,19 +91,22 @@ export default function SearchReports({ reports }: SearchReportsProps) {
                     {content}
                   </p>
                   {/* Footer info */}
-                  <div className="flex items-center text-xs text-gray-500 pt-1 border-t border-gray-100">
+                  <div className="flex items-center text-xs text-gray-500 pt-1 ">
                     <div className="flex items-center">
-                      <CalendarIcon className="h-3 w-3 mr-1" />
-                      <span>
-                        {new Date(report.createdAt).toLocaleDateString()}
-                      </span>
+                      <Badge>
+                        {" "}
+                        <CalendarIcon className="h-3 w-3 mr-1" />
+                        <span>
+                          {new Date(report.createdAt).toLocaleDateString()}
+                        </span>
+                      </Badge>{" "}
                     </div>
                     <div className="ml-auto flex items-center">
-                      <FileTextIcon className="h-3 w-3 mr-1" />
+                 <Badge>     <FileTextIcon className="h-3 w-3 mr-1" />
                       <span>
                         {report.evidence?.length || 0}{" "}
                         {report.evidence?.length === 1 ? "file" : "files"}
-                      </span>
+                      </span></Badge>
                     </div>
                   </div>
                 </CardContent>
